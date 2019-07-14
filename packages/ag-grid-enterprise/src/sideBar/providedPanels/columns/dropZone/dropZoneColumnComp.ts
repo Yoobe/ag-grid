@@ -35,14 +35,13 @@ export class DropZoneColumnComp extends Component {
 
     private static TEMPLATE =
        `<span class="ag-column-drop-cell">
-          <span class="ag-column-drag" ref="eDragHandle"></span>
+          <span class="ag-icon ag-icon-grip ag-column-drag" ref="eDragHandle"></span>
           <span class="ag-column-drop-cell-text"></span>
-          <span class="ag-column-drop-cell-button">&#10006;</span>
+          <span class="ag-column-drop-cell-button ag-icon ag-icon-cancel"></span>
         </span>`;
 
     @Autowired('dragAndDropService') dragAndDropService: DragAndDropService;
     @Autowired('columnController') columnController: ColumnController;
-    @Autowired('context') context: Context;
     @Autowired('popupService') popupService: PopupService;
     @Autowired('aggFuncService') aggFuncService: AggFuncService;
     @Autowired('gridOptionsWrapper') gridOptionsWrapper: GridOptionsWrapper;
@@ -170,7 +169,7 @@ export class DropZoneColumnComp extends Component {
             getRowCount: function() { return rows.length; }
         });
 
-        this.context.wireBean(virtualList);
+        this.getContext().wireBean(virtualList);
 
         const ePopup = _.loadTemplate('<div class="ag-select-agg-func-popup"></div>');
         ePopup.style.top = '0px';

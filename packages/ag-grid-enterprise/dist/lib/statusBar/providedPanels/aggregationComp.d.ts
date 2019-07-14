@@ -1,4 +1,4 @@
-// ag-grid-enterprise v20.1.0
+// ag-grid-enterprise v21.0.1
 import { Component, IStatusPanelComp } from 'ag-grid-community';
 export declare class AggregationComp extends Component implements IStatusPanelComp {
     private static TEMPLATE;
@@ -6,9 +6,7 @@ export declare class AggregationComp extends Component implements IStatusPanelCo
     private rangeController;
     private valueService;
     private cellNavigationService;
-    private pinnedRowModel;
-    private rowModel;
-    private context;
+    private rowRenderer;
     private gridOptionsWrapper;
     private gridOptions;
     private gridApi;
@@ -18,12 +16,10 @@ export declare class AggregationComp extends Component implements IStatusPanelCo
     private maxAggregationComp;
     private avgAggregationComp;
     constructor();
-    private preConstruct;
     private postConstruct;
     private isValidRowModel;
     init(): void;
     private setAggregationComponentValue;
     private getAggregationValueComponent;
     private onRangeSelectionChanged;
-    private getRowNode;
 }

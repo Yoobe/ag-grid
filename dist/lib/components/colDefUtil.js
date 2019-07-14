@@ -1,6 +1,6 @@
 /**
  * ag-grid-community - Advanced Data Grid / Data Table supporting Javascript / React / AngularJS / Web Components
- * @version v20.1.0
+ * @version v21.0.1
  * @link http://www.ag-grid.com/
  * @license MIT
  */
@@ -32,7 +32,8 @@ var ColDefUtil = /** @class */ (function () {
         'aggFunc',
         'cellRenderer',
         'cellEditor',
-        'pinned'
+        'pinned',
+        'chartDataType'
     ];
     ColDefUtil.OBJECT_PROPERTIES = [
         'headerGroupComponent',

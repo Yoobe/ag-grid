@@ -1,6 +1,6 @@
 <?php
 $pageTitle = "Internationalisation: Styling & Appearance with our Datagrid";
-$pageDescription = "ag-Grid is a feature-rich data grid supporting major JavaScript Frameworks. One such feature is Internationalisation. Support multiple languages with Internationalisation. Version 20 is available for download now, take it for a free two month trial.";
+$pageDescription = "Core feature of ag-Grid supporting Angular, React, Javascript and more. One such feature is Internationalisation. Support multiple languages with Internationalisation. Version 20 is available for download now, take it for a free two month trial.";
 $pageKeyboards = "ag-Grid Internationalisation";
 $pageGroup = "feature";
 include '../documentation-main/documentation_header.php';
@@ -55,6 +55,10 @@ localeText = {
         startsWith: 'daStarts dawith',
         endsWith: 'daEnds dawith',
 
+        // filter conditions
+        andCondition: 'daAND',
+        orCondition: 'daOR',
+
         // the header of the default group column
         group: 'laGroup',
 
@@ -88,7 +92,8 @@ localeText = {
         toolPanel: 'laTool Panelo',
         export: 'laExporto',
         csvExport: 'la CSV Exportp',
-        excelExport: 'la Excel Exporto',
+        excelExport: 'la Excel Exporto (.xlsx)',
+        excelXmlExport: 'la Excel Exporto (.xml)'
 
         // enterprise menu pinning
         pinLeft: 'laPin &lt;&lt;',
@@ -102,6 +107,10 @@ localeText = {
         none: 'laNone',
         count: 'laCount',
         average: 'laAverage',
+        filteredRows: 'laFiltered'
+        selectedRows: 'laSelected'
+        totalRows: 'laTotal Rows'
+        totalAndFilteredRows: 'laRows'
 
         // standard menu
         copy: 'laCopy',

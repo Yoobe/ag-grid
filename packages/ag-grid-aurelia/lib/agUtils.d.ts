@@ -1,2 +1,2 @@
-// ag-grid-aurelia v20.1.0
+// ag-grid-aurelia v21.0.1
 export declare function generateBindables(names: string[], bindingModeToUse?: any): any;

@@ -1,5 +1,98 @@
+<div class="note" style="display: none" fixVersionNote id="fix_version_21_0_0">
+    <p>Release 21.0.0 (4th June 2019)</p>
+
+    <p>Feature Highlights:</p>
+
+    <ul>
+
+        <li>
+            AG-3008 / AG-3009 - Integrated Charts - a major new component has been added to ag-Grid which provides integrated charting from within the grid (see <a href="/javascript-grid-charts-overview/#user-created-charts">User Created Charts</a> and
+            <a href="/javascript-grid-charts-overview/#application-created-charts">Application Created Charts</a>).
+        </li>
+
+        <li>
+            AG-2946 - Filters Refactor - The simple provided filters (number, text, date) were part of the first
+            grid release and the design was built on top of as new requirements were catered for. All the
+            additional requirements made the original design difficult to maintain - the old design was
+            coming to it's 'end of life'. For that reason the simple provided filters were rewritten from scratch.
+            The has the benefits of a) implementing floating filters is now simpler; b) all provided filters
+            now work in a more consistent way; c) code is easier to follow for anyone debugging through the
+            ag-Grid code. The documentation for column filters was also rewritten from scratch to make it
+            easier to follow.
+        </li>
+
+        <li>
+            AG-2804 - Scroll Performance Improvements - Now when you scroll vertically the performance is vastly
+            improved over the previous version of the grid. We make better use of debounced scrolling, animation
+            and animation frames.
+        </li>
+
+        <li>
+            AG-2999 - Change of License Messaging - Now anyone can try out ag-Grid Enterprise without needing
+            a license from us. We want everyone to give ag-Grid Enterprise a trial. You only need to get in touch
+            with us if you decided to start using ag-Grid inside your project.
+        </li>
+
+        <li>
+            AG-2983 - Improved customisation for icons (see <a href="/javascript-grid-icons/">Custom Icons</a>).
+        </li>
+
+        <li>AG-2663 - React - Declarative Column Definitions Now Reactive.</li>
+        <li>AG-2536 - React - Component Container Configurable (see <a href="/react-more-details/#control-react-components-container">Control React Components Container</a>).</li>
+        <li>AG-2656 - React - Allow React Change Detection to be Configurable (see <a href="/react-more-details/#react-row-data-control">Row Data Control</a>).</li>
+        <li>AG-2257 - All Frameworks - Expand & Improve Testing Documentation (see <a href="/javascript-grid-testing/">ag-Grid Testing</a>).</li>
+    </ul>
+
+
+    <p>Breaking Changes:</p>
+    <ul>
+        <li>
+            AG-2946 - Number and Date Column Filters – Null Comparator is replaced with includeBlanksInEquals, includeBlanksInLessThan and includeBlanksInGreaterThan. (see <a href="/javascript-grid-filter-provided-simple/#blank-cells-date-and-number-filters">Blank Cells - Date and Number Filters</a>).
+        </li>
+
+        <li>
+            AG-2946 - Floating Filters: floatingFilterParams.debounceMs is no longer a property, instead the floating filter uses the property of the same name form filterParams.
+        </li>
+
+        <li>
+            AG-2946 - Custom Floating Filters – params.onParentModelChanged() is no longer used -instead you call methods on the parent filter directly. Also IFloatingFilter no longer takes generics. (see
+            <a href="/javascript-grid-floating-filter-component/">Custom Floating Filters</a>).
+        </li>
+
+        <li>
+            AG-2984 - Replaced all SVG icons with a WebFont (see <a href="/javascript-grid-icons/">Custom Icons</a>).
+        </li>
+    </ul>
+</div>
+
+<div class="note" style="display: none" fixVersionNote id="fix_version_20_2_0">
+    <p>Release 20.2.0 (22nd Mar 2019)</p>
+
+    <p>Breaking Changes:</p>
+    <ul>
+        <li>
+            AG-1707 - Change Tree Data filtering to additionally include child nodes when parent node passes filter
+            (see <a href="/javascript-grid-tree-data/#tree-data-filtering">Tree Data Filtering</a>).
+        </li>
+    </ul>
+
+    <p>Feature Highlights:</p>
+
+    <ul>
+        <li>AG-2722 - Add ability to create custom filters without input filter fields, ie isNull (see <a href="/javascript-grid-filtering/#adding-custom-filter-options">Custom Filter Options</a>).
+        </li>
+
+        <li>AG-2121 - Allow column-spanning across row header groups when they belong to the same column group</li>
+
+        <li>AG-1936 - Add the ability to change the header checkbox and the drag handle icons</li>
+
+        <li>AG-2143 - Add new property to load the grid with the sidebar hidden</li>
+    </ul>
+</div>
+
+
 <div class="note" style="display: none" fixVersionNote id="fix_version_20_1_0">
-    <p>Release 20.1.0 Overview</p>
+    <p>Release 20.1.0 (22nd Feb 2019)</p>
 
     <p>Feature Highlights:</p>
 
@@ -25,7 +118,7 @@
 </div>
 
 <div class="note" style="display: none" fixVersionNote id="fix_version_20_0_0">
-    <p>Release 20.0.0 Overview</p>
+    <p>Release 20.0.0 (11th Jan 2019)</p>
 
     <p>Breaking Changes:</p>
 
@@ -76,7 +169,7 @@
 </div>
 
 <div class="note" style="display: none" fixVersionNote id="fix_version_19_1_1">
-    <p>Release 19.1.1 Overview</p>
+    <p>Release 19.1.1 (30th Oct 2018)</p>
 
     <p>Feature Highlights:</p>
 
@@ -95,7 +188,7 @@
 </div>
 
 <div class="note" style="display: none" fixVersionNote id="fix_version_19_0_0">
-    <p>Release 19.0.0 Overview</p>
+    <p>Release 19.0.0 (7th Sept 2018)</p>
 
     <p>Breaking Changes:</p>
 
@@ -143,13 +236,11 @@
         <li>
             AG-1363 columnApi.resetColumnState() can now optionally raise column based events.
         </li>
-
     </ul>
-
 </div>
 
 <div class="note" style="display: none" fixVersionNote id="fix_version_18_0_0">
-    <p>Release 18.0.0 Overview</p>
+    <p>Release 18.0.0 (12th Jun 2018)</p>
 
     <ul>
         <li>
@@ -224,7 +315,7 @@
 </div>
 
 <div class="note" style="display: none" fixVersionNote id="fix_version_17_1_0">
-    <p>Release 17.1.0 Overview</p>
+    <p>Release 17.1.0 (13th Apr 2018)</p>
 
     <ul>
         <li>

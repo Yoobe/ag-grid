@@ -1,10 +1,14 @@
 import { Shape } from "./shape";
-import {chainObjects} from "../../util/object";
-import {pixelSnap, PixelSnapBias} from "../../canvas/canvas";
+import { chainObjects } from "../../util/object";
+import { BBox } from "../bbox";
 
 export class Line extends Shape {
+
+    static className = 'Line';
+
     protected static defaultStyles = chainObjects(Shape.defaultStyles, {
-        strokeStyle: 'black'
+        fill: undefined,
+        strokeWidth: 1
     });
 
     constructor() {
@@ -27,7 +31,7 @@ export class Line extends Shape {
     set x1(value: number) {
         if (this._x1 !== value) {
             this._x1 = value;
-            this.isDirty = true;
+            this.dirty = true;
         }
     }
     get x1(): number {
@@ -51,7 +55,7 @@ export class Line extends Shape {
     set y1(value: number) {
         if (this._y1 !== value) {
             this._y1 = value;
-            this.isDirty = true;
+            this.dirty = true;
         }
     }
     get y1(): number {
@@ -62,7 +66,7 @@ export class Line extends Shape {
     set x2(value: number) {
         if (this._x2 !== value) {
             this._x2 = value;
-            this.isDirty = true;
+            this.dirty = true;
         }
     }
     get x2(): number {
@@ -73,25 +77,21 @@ export class Line extends Shape {
     set y2(value: number) {
         if (this._y2 !== value) {
             this._y2 = value;
-            this.isDirty = true;
+            this.dirty = true;
         }
     }
     get y2(): number {
         return this._y2;
     }
 
-    readonly getBBox: any = undefined;
-
-    private _pixelSnapBias = PixelSnapBias.Positive;
-    set pixelSnapBias(value: PixelSnapBias) {
-        if (this._pixelSnapBias !== value) {
-            this._pixelSnapBias = value;
-            this.isDirty = true;
-        }
-    }
-    get pixelSnapBias(): PixelSnapBias {
-        return this._pixelSnapBias;
-    }
+    readonly getBBox = (): BBox => {
+        return new BBox(
+            this.x1,
+            this.y1,
+            this.x2 - this.x1,
+            this.y2 - this.y1
+        );
+    };
 
     isPointInPath(x: number, y: number): boolean {
         return false;
@@ -102,12 +102,10 @@ export class Line extends Shape {
     }
 
     render(ctx: CanvasRenderingContext2D): void {
-        if (this.isDirtyTransform) {
+        if (this.dirtyTransform) {
             this.computeTransformMatrix();
         }
         this.matrix.toContext(ctx);
-
-        this.applyContextAttributes(ctx);
 
         let x1 = this.x1;
         let y1 = this.y1;
@@ -117,11 +115,11 @@ export class Line extends Shape {
         // Align to the pixel grid if the line is strictly vertical
         // or horizontal (but not both, i.e. a dot).
         if (x1 === x2) {
-            const delta = pixelSnap(this.lineWidth, this.pixelSnapBias);
+            const delta = Math.floor(this.strokeWidth) % 2 / 2;
             x1 += delta;
             x2 += delta;
         } else if (y1 === y2) {
-            const delta = pixelSnap(this.lineWidth, this.pixelSnapBias);
+            const delta = Math.floor(this.strokeWidth) % 2 / 2;
             y1 += delta;
             y2 += delta;
         }
@@ -130,10 +128,8 @@ export class Line extends Shape {
         ctx.moveTo(x1, y1);
         ctx.lineTo(x2, y2);
 
-        if (this.strokeStyle) {
-            ctx.stroke();
-        }
+        this.fillStroke(ctx);
 
-        this.isDirty = false;
+        this.dirty = false;
     }
 }

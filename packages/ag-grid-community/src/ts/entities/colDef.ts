@@ -1,15 +1,15 @@
 import { RowNode } from "./rowNode";
-import { ICellEditorComp } from "../interfaces/iCellEditor";
-import { ICellRendererComp, ICellRendererFunc } from "../rendering/cellRenderers/iCellRenderer";
+import { ICellEditorComp, ICellEditorParams } from "../interfaces/iCellEditor";
+import { ICellRendererComp, ICellRendererFunc, ICellRendererParams } from "../rendering/cellRenderers/iCellRenderer";
 import { Column } from "./column";
 import { IFilterComp } from "../interfaces/iFilter";
 import { GridApi } from "../gridApi";
 import { ColumnApi } from "../columnController/columnApi";
 import { IHeaderGroupComp } from "../headerRendering/headerGroup/headerGroupComp";
-import { IFloatingFilterComp } from "../filter/floatingFilter";
+import { IFloatingFilterComp } from "../filter/floating/floatingFilter";
 import { CellClickedEvent, CellContextMenuEvent, CellDoubleClickedEvent } from "../events";
 import { ITooltipComp, ITooltipParams } from "../rendering/tooltipComponent";
-import { DynamicComponentDef, DynamicComponentParams } from "../components/framework/componentResolver";
+import { ComponentSelectorResult } from "../components/framework/userComponentFactory";
 
 /****************************************************************
  * Don't forget to update ComponentUtil if changing this class. PLEASE!*
@@ -139,13 +139,13 @@ export interface ColDef extends AbstractColDef {
     cellRenderer?: { new(): ICellRendererComp } | ICellRendererFunc | string;
     cellRendererFramework?: any;
     cellRendererParams?: any;
-    cellRendererSelector?: (params: DynamicComponentParams) => DynamicComponentDef;
+    cellRendererSelector?: (params: ICellRendererParams) => ComponentSelectorResult;
 
     /** Cell editor */
     cellEditor?: { new(): ICellEditorComp } | string ;
     cellEditorFramework?: any;
     cellEditorParams?: any;
-    cellEditorSelector?: (params: DynamicComponentParams) => DynamicComponentDef;
+    cellEditorSelector?: (params: ICellEditorParams) => ComponentSelectorResult;
 
     /** A function for rendering a pinned row cell. */
     pinnedRowCellRenderer?: { new(): ICellRendererComp } | ICellRendererFunc | string;
@@ -179,7 +179,7 @@ export interface ColDef extends AbstractColDef {
     pivot?: boolean;
 
     /** Comparator function for custom sorting. */
-    comparator?: (valueA: any, valueB: any, nodeA?: RowNode, nodeB?: RowNode, isInverted?: boolean) => number;
+    comparator?: (valueA: any, valueB: any, nodeA: RowNode, nodeB: RowNode, isInverted: boolean) => number;
 
     /** Comparator for values, used by renderer to know if values have changed. Cells who's values have not changed don't get refreshed. */
     equals?: (valueA: any, valueB: any) => boolean;
@@ -330,11 +330,14 @@ export interface ColDef extends AbstractColDef {
     headerComponentParams?: any;
 
     /** The custom header component to be used for rendering the floating filter. If none specified the default ag-Grid is used**/
-    floatingFilterComponent?: string | { new(): IFloatingFilterComp<any, any, any> };
+    floatingFilterComponent?: string | { new(): IFloatingFilterComp };
     floatingFilterComponentParams?: any;
     floatingFilterComponentFramework?: any;
 
     refData?: { [key: string]: string };
+
+    /** Defines the column data type used when charting, i.e. 'category' | 'series' | 'excluded' | undefined **/
+    chartDataType?: string;
 }
 
 export interface IsColumnFunc {
@@ -411,6 +414,7 @@ export interface CellClassParams {
     colDef: ColDef;
     rowIndex: number;
     $scope: any;
-    api: GridApi | null | undefined;
+    api: GridApi;
+    columnApi: ColumnApi;
     context: any;
 }

@@ -1,9 +1,8 @@
-// ag-grid-enterprise v20.1.0
+// ag-grid-enterprise v21.0.1
 import { BeanStub, IServerSideDatasource, IServerSideRowModel, RowBounds, RowNode } from "ag-grid-community";
 export declare class ServerSideRowModel extends BeanStub implements IServerSideRowModel {
     private gridOptionsWrapper;
     private eventService;
-    private context;
     private columnController;
     private filterManager;
     private sortController;
@@ -18,7 +17,6 @@ export declare class ServerSideRowModel extends BeanStub implements IServerSideR
     private rowNodeBlockLoader;
     ensureRowHeightsValid(startPixel: number, endPixel: number, startLimitIndex: number, endLimitIndex: number): boolean;
     private postConstruct;
-    destroy(): void;
     private destroyDatasource;
     private setBeans;
     private addEventListeners;
@@ -65,4 +63,5 @@ export declare class ServerSideRowModel extends BeanStub implements IServerSideR
     private isSortingWithSecondaryColumn;
     private cacheExists;
     private createDetailNode;
+    isLoading(): boolean;
 }

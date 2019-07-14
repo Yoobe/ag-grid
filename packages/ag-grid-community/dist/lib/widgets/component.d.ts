@@ -1,4 +1,4 @@
-// Type definitions for ag-grid-community v20.1.0
+// Type definitions for ag-grid-community v21.0.1
 // Project: http://www.ag-grid.com/
 // Definitions by: Niall Crosby <https://github.com/ag-grid/>
 import { Context } from "../context/context";
@@ -14,26 +14,24 @@ export declare class Component extends BeanStub implements IComponent<any> {
     private childComponents;
     private annotatedEventListeners;
     private visible;
+    protected parentComponent: Component | undefined;
     private compId;
     constructor(template?: string);
     getCompId(): number;
-    instantiate(context: Context): void;
-    private instantiateRecurse;
-    private getAttrLists;
-    private addEventListenersToElement;
-    private addEventListenersToComponent;
-    private addEventListenerCommon;
-    private createChildAttributes;
+    private createChildComponentsFromTags;
     private copyAttributesFromNode;
     private swapComponentForNode;
     private swapInComponentForQuerySelectors;
     setTemplate(template: string): void;
     setTemplateFromElement(element: HTMLElement): void;
+    private createChildComponentsPreConstruct;
     protected wireQuerySelectors(): void;
     private addAnnotatedEventListeners;
     private getAgComponentMetaData;
     private removeAnnotatedEventListeners;
     getGui(): HTMLElement;
+    setParentComponent(component: Component): void;
+    getParentComponent(): Component | undefined;
     protected setGui(eGui: HTMLElement): void;
     protected queryForHtmlElement(cssSelector: string): HTMLElement;
     protected queryForHtmlInputElement(cssSelector: string): HTMLInputElement;

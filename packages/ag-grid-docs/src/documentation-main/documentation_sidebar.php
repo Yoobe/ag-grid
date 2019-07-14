@@ -1,60 +1,81 @@
 <div id="side-bar-announcements">
 </div>
-<br>
 <div class="card card-highlight">
     <div class="card-body">
-        <h5 class="card-title">ag-Grid News</h5>
-        <h6 class="card-subtitle mb-2 text-muted">Conferences</h6>
-        <p class="font-weight-normal">ag-Grid will be the <strong>premier sponsors</strong> of the world's largest
-            Angular conferences</p>
-        <img src="../images/flags/united-states.png" style="height: 18px; width: 18px"><a class="learn-more"
-                                                                                          href="https://www.ng-conf.org"
-                                                                                          target="_blank"> ng-Conf</a>
-        <p class="card-subtitle mb-2 text-muted" style="margin-top: 1px">May 1st-3rd</p>
-        <img src="../images/flags/united-kingdom.png"><a class="learn-more" href="https://angularconnect.com"
-                                                         target="_blank"> Angular Connect</a>
-        <p class="card-subtitle mb-2 text-muted" style="margin-top: 1px">Sept 19th-20th</p>
-        <img src="../images/flags/den.png"><a class="learn-more" href="https://ngvikings.org/" target="_blank">
-            ng-Vikings</a>
-        <p class="card-subtitle mb-2 text-muted" style="margin-top: 1px">May 27th-28th</p>
-        <br>
-        <p>ag-Grid will be sponsoring the following React conferences:</p>
-        <img src="../images/flags/netherlands.png"><a class="learn-more" href="https://react.amsterdam/"
-                                                      target="_blank"> React Amsterdam</a>
-        <p class="card-subtitle mb-2 text-muted" style="margin-top: 1px">April 10th-12th</p>
-    </div>
-</div>
-<br>
-<p>Latest Release:</p>
-
-<div class="card card-highlight">
-    <div class="card-body">
-        <h5 class="card-title"><a href="../ag-grid-changelog/?fixVersion=20.1.0">Version 20.1.0 Released</a></h5>
-        <h6 class="card-subtitle mb-2 text-muted">Feb 22</h6>
+        <h5 class="card-title"><a href="../ag-grid-changelog/?fixVersion=21.0.0">Version 21.0.0</a></h5>
+        <h6 class="card-subtitle mb-2 text-muted">Jun 4</h6>
         <p class="card-text">
-            Minor release with new features and bug fixes:
+            Major release with new features and bug fixes:
         </p>
         <ul>
-            <li><a class="learn-more" href="https://www.ag-grid.com/javascript-grid-tooltip-component">
-                    Tooltip Components</a></li>
+            <li><a class="learn-more"
+                   href="https://www.ag-grid.com/javascript-grid-charts-overview">Integrated Charts</a></li>
 
             <li><a class="learn-more"
-                   href="https://www.ag-grid.com/javascript-grid-filtering/#adding-custom-filter-options">
-                    Custom Filters Options</a></li>
+                   href="https://www.ag-grid.com/javascript-grid-filtering">Filtering Improvements</a></li>
 
-            <li><a class="learn-more" href="https://www.ag-grid.com/javascript-grid-loading-cell-renderer">
-                    Loading Components</a></li>
+            <li><a class="learn-more"
+                   href="https://www.ag-grid.com/javascript-grid-icons/">Icon Customisation</a></li>
 
-            <li><a class="learn-more" href="https://www.ag-grid.com/nodejs-server-side-operations">
-                    SSRM with Node.js Guide</a></li>
+            <li>Better Scroll Performance</li>
         </ul>
+
         <p class="text-right">
-            <a class="learn-more" href="../ag-grid-changelog/?fixVersion=20.1.0">Change Log</a>
+            <a class="learn-more" href="../ag-grid-changelog/?fixVersion=21.0.0">Change Log</a>
         </p>
     </div>
 </div>
 <br>
+<div class="card card-highlight">
+    <div class="card-body">
+        <h5 class="card-title">Community or Enterprise?</h5>
+        <img style="width: 30px; float: left; margin-right: 6px;" src="../_assets/svg/Community.svg"/>
+        <p class="font-weight-normal">Everyone can use ag-Grid Community for free.
+            It's MIT licensed and Open Source. No restrictions. No strings attached.
+        </p>
+        <!--
+                <img style="width: 30px; float: left; margin-right: 6px;" src="../_assets/svg/SA.svg"/>
+                <img style="width: 30px; float: left; margin-right: 6px;" src="../_assets/svg/MA.svg"/>
+        -->
+        <img style="width: 30px; float: left; margin-right: 6px;" src="../_assets/svg/enterprise.svg"/>
+        <p class="font-weight-normal">Do you want more features? Then
+            <a class="learn-more" href="../javascript-grid-set-license/">get started with ag-Grid Enterprise</a>.
+            You don't need to contact us to evaluate ag-Grid Enterprise. A license is only required
+            when you start developing for production.
+        </p>
+    </div>
+</div>
+<br>
+<div class="card card-highlight">
+    <div class="card-body">
+        <h5 class="card-title">Conferences 2019</h5>
+        <p class="font-weight-normal">Come see us at the following conferences that we are attending and sponsoring.</p>
 
+        <h6 class="card-subtitle mb-2 text-muted">React</h6>
+        <img src="../images/flags/netherlands.png">
+        <a class="learn-more" href="https://react.amsterdam/" target="_blank"> React Amsterdam</a>
+        <p class="card-subtitle mb-2 text-muted" style="margin-top: 1px">Apr 10th-12th</p>
+        <img src="../images/flags/united-states.png" style="height: 18px; width: 18px">
+        <a class="learn-more" href="https://www.reactrally.com/" target="_blank"> React Rally</a>
+        <p class="card-subtitle mb-2 text-muted" style="margin-top: 1px">Aug 22th-23th</p>
+
+        <br>
+        <h6 class="card-subtitle mb-2 text-muted">Angular</h6>
+        <img src="../images/flags/united-states.png" style="height: 18px; width: 18px">
+        <a class="learn-more" href="https://www.ng-conf.org" target="_blank"> ng-Conf</a>
+        <p class="card-subtitle mb-2 text-muted" style="margin-top: 1px">May 1st-3rd</p>
+        <img src="../images/flags/den.png">
+        <a class="learn-more" href="https://ngvikings.org/" target="_blank">ng-Vikings</a>
+        <p class="card-subtitle mb-2 text-muted" style="margin-top: 1px">May 27th-28th</p>
+        <img src="../images/flags/united-kingdom.png">
+        <a class="learn-more" href="https://angularconnect.com" target="_blank"> Angular Connect</a>
+        <p class="card-subtitle mb-2 text-muted" style="margin-top: 1px">Sep 19th-20th</p>
+        <img src="../images/flags/spain.png" style="height: 18px; width: 18px">
+        <a class="learn-more" href="https://ngspain.com/" target="_blank"> ngSpain</a>
+        <p class="card-subtitle mb-2 text-muted" style="margin-top: 1px">Oct 18th-20th</p>
+    </div>
+</div>
+<br>
 <hr>
 <!-- Begin Mailchimp Signup Form -->
 <link href="//cdn-images.mailchimp.com/embedcode/classic-10_7.css" rel="stylesheet" type="text/css">
@@ -64,9 +85,8 @@
         clear: left;
         font: 14px Helvetica, Arial, sans-serif;
     }
-
     /* Add your own Mailchimp form style overrides in your site stylesheet or in this style block.
-       We recommend moving this block and the preceding CSS link to the HEAD of your HTML file. */
+    We recommend moving this block and the preceding CSS link to the HEAD of your HTML file. */
 </style>
 <div id="mc_embed_signup">
     <form action="https://ag-grid.us11.list-manage.com/subscribe/post?u=9b44b788c97fa5b498fbbc9b5&amp;id=9353cf87ce"
@@ -123,7 +143,6 @@
     }(jQuery));
     var $mcj = jQuery.noConflict(true);</script>
 <!--End mc_embed_signup-->
-
 <div id="side-bar-announcements" style="margin-top: 10px">
     <p>From our <a href="https://medium.com/ag-grid/">blog</a>:</p>
     <div class="card">

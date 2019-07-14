@@ -20,9 +20,12 @@ include '../landing-pages/convert-header.php';
         </a>
     </div>
     <h1>World's Leading Angular Datagrid Component</h1>
-    <p class="lead-description" id="opener">ag-Grid is a feature rich data grid built for Angular.<br>
-        Use our Angular grid component and integrate seamlessly with Angular 2,4,5,6,7 <br>
-        to deliver features you need with the performance that you expect.
+    <h2 class="overview">Overview</h2>
+    <p class="lead-description" id="angular-data-grid-overview">
+        ag-Grid is a feature-rich data grid built for Angular.<br> 
+        Integrate seamlessly with Angular 2,4,5,6,7 to deliver core and enterprise features with the performance you expect.<br> 
+        Discover key benefits and resources available to quickly add an Angular Data Grid or 
+        Datatable to your Angular application.
     </p>
     <div class="container">
         <div class="row">
@@ -42,7 +45,7 @@ include '../landing-pages/convert-header.php';
                     &#10003; Ease of Integration/Customization
                 </p>
                 <br>
-                <a href="https://www.ag-grid.com/start-trial.php" target="_blank"><button type="button" class="btn btn-primary">Start Free Trial</button></a>
+                <a href="https://www.ag-grid.com/angular-getting-started/" target="_blank"><button type="button" class="btn btn-primary">Get Started</button></a>
             </div>
         </div>
     </div>
@@ -223,7 +226,7 @@ include '../landing-pages/convert-header.php';
         </div>
         <div class="col">
             <hr>
-            <a href="https://www.ag-grid.com/start-trial.php" target="_blank"><button type="button" class="btn btn-primary">Start Free Trial</button></a>
+            <a href="https://www.ag-grid.com/angular-getting-started/" target="_blank"><button type="button" class="btn btn-primary">Get Started</button></a>
             <hr>
         </div>
     </div>
@@ -236,30 +239,30 @@ include '../landing-pages/convert-header.php';
 <div class="description">
     <h4>It's ridiculously fast</h4>
     <p>
-        Our React Grid component is built to deal with large data sets.
+        Our Angular Grid component is built to deal with large data sets.
         Designed to deliver the performance required by modern day
         enterprise applications.
         The grid can process over <strong>100,000 updates per second</strong> and performs smoothly with
         <strong>millions</strong> of records.
         <br><br>
-        Save work and development time with the best and fastest React Grid.
+        Save work and development time with the best and fastest Angular Grid.
     </p>
     <h4>And we don't stop there</h4>
     <p>
         We understand the modern need for speed, so we constantly
         working to combine the latest browsers advances and
-        cutting-edge algorithms in our grid to justify the reputation of the best React datagrid in the
+        cutting-edge algorithms in our grid to justify the reputation of the best Angular datagrid in the
         world.
     </p>
 </div>
 <div class="grid-example">
-    <p class="lead-description">Stress-test our React grid with
+    <p class="lead-description">Stress-test our Angular grid with
         <span class="underlined">100 000</span>
     records and 20 columns</p>
     <div class="grid-container ag-theme-balham"></div>
     <br>
     <p style="text-align: center;">
-        *<strong>React Grid Example Demo</strong>*
+        *<strong>Angular Grid Example Demo</strong>*
     </p>
 </div>
 </div>
@@ -271,7 +274,7 @@ include '../landing-pages/convert-header.php';
 </div>
 <div class="col">
     <hr>
-    <a href="https://www.ag-grid.com/start-trial.php" target="_blank"><button type="button" class="btn btn-primary">Start Free Trial</button></a>
+    <a href="https://www.ag-grid.com/angular-getting-started/" target="_blank"><button type="button" class="btn btn-primary">Get Started</button></a>
     <hr>
 </div>
 </div>
@@ -327,7 +330,7 @@ Waste no time in integrating ag-Grid Angular into your Web Application.</p>
 </div>
 <div class="col">
 <hr>
-<a href="https://www.ag-grid.com/start-trial.php" target="_blank"><button type="button" class="btn btn-primary">Start Free Trial</button></a>
+<a href="https://www.ag-grid.com/angular-getting-started/" target="_blank"><button type="button" class="btn btn-primary">Get Started</button></a>
 <hr>
 </div>
 </div>
@@ -377,12 +380,12 @@ You can easily extend the default functionality by creating your custom Angular 
 <div class="row">
 <div class="col">
     <hr>
-    <a href="https://medium.com/ag-grid/learn-to-customize-react-grid-in-less-than-10-minutes-2ce6845646bb" target="_blank"><button type="button" class="btn btn-primary">Customize Angular Grid Blog</button></a>
+    <a href="https://blog.ag-grid.com/learn-to-customize-angular-grid-in-less-than-10-minutes/" target="_blank"><button type="button" class="btn btn-primary">Customize Angular Grid Blog</button></a>
     <hr>
 </div>
 <div class="col">
     <hr>
-    <a href="https://www.ag-grid.com/start-trial.php" target="_blank"><button type="button" class="btn btn-primary">Start Free Trial</button></a>
+    <a href="https://www.ag-grid.com/angular-getting-started/" target="_blank"><button type="button" class="btn btn-primary">Get Started</button></a>
     <hr>
 </div>
 </div>
@@ -439,7 +442,7 @@ Angular Responsive Grid Layout
         </div>
         <div class="col">
             <hr>
-            <a href="https://www.ag-grid.com/start-trial.php" target="_blank"><button type="button" class="btn btn-primary">Start Free Trial</button></a>
+            <a href="https://www.ag-grid.com/angular-getting-started/" target="_blank"><button type="button" class="btn btn-primary">Get Started</button></a>
             <hr>
         </div>
     </div>
@@ -506,7 +509,7 @@ Angular Responsive Grid Layout
 </h3>
 <br>
 <p class="lead">
-    Head over to the Angular guides section for more in-depth information about the React flavor of ag-Grid.
+    Head over to the Angular guides section for more in-depth information about the Angular flavor of ag-Grid.
 </p>
 <div class="row">
     <div class="col">
@@ -528,12 +531,12 @@ Angular Responsive Grid Layout
             </p>
         </div>
             <div class="col">
-                <a href="https://medium.com/ag-grid/get-started-with-react-grid-in-5-minutes-f6e5fb16afa"><p class="lead-description">
-                    Get Started with Angular Grid[Blog]
+                <a href="https://blog.ag-grid.com/tag/angular/"><p class="lead-description">
+                    ag-Grid Angular[Blog]
                 </p></a>
                 <img class="icons" alt="ag-grid-angular-blog" src="/images/icons/blog.svg">
                 <p class="lead-description">
-                    This article describes the Angular grid example and shows you how easy it is to integrate and configure it. It’s a 5 minute getting started guide with examples that you can copy/paste and hit the ground running.
+                    Browse all our Angular and Angular Grid related blogs, ranging from depthful content to guides and tutorials surrounding ag-Grid Angular and general Angular content.
                 </p>
             </div>
         </div>
@@ -562,7 +565,7 @@ Angular Responsive Grid Layout
 <p class="lead-description">
     <strong>Join the <strong>millions of developers</strong> and <strong>thousands of companies</strong> who use ag-Grid.<br> Ready to give it a try?</strong>
 </p>
-<a href="https://www.ag-grid.com/start-trial.php" target="_blank"><button type="button" class="btn btn-primary btn-lg btn-block">Start Free Trial</button></a>
+<a href="https://www.ag-grid.com/angular-getting-started/" target="_blank"><button type="button" class="btn btn-primary btn-lg btn-block">Get Started</button></a>
 </p>
 </div>
 </div>

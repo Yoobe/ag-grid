@@ -11,7 +11,8 @@ CustomDateComponent.prototype.init = function (params) {
     this.params = params;
 
     this.eGui = document.createElement('div');
-    this.eGui.classList.add('ag-input-text-wrapper', 'custom-date-filter', 'fa');
+    this.eGui.classList.add('ag-input-text-wrapper');
+    this.eGui.classList.add('custom-date-filter');
     this.eGui.innerHTML = template;
     this.eInput = this.eGui.querySelector('input');
 

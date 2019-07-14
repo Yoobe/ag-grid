@@ -1,64 +1,44 @@
-// ag-grid-enterprise v20.1.0
+// ag-grid-enterprise v21.0.1
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var hdpiCanvas_1 = require("../canvas/hdpiCanvas");
-var shape_1 = require("./shape/shape");
 var Scene = /** @class */ (function () {
     function Scene(width, height) {
+        var _this = this;
         if (width === void 0) { width = 800; }
         if (height === void 0) { height = 600; }
-        var _this = this;
         this.id = this.createId();
-        this.onMouseMove = function (e) {
-            var x = e.offsetX;
-            var y = e.offsetY;
-            if (_this.root) {
-                var node = _this.pickNode(_this.root, x, y);
-                if (node) {
-                    if (node instanceof shape_1.Shape) {
-                        if (!_this.lastPick) {
-                            _this.lastPick = { node: node, fillStyle: node.fillStyle };
-                        }
-                        else if (_this.lastPick.node !== node) {
-                            _this.lastPick.node.fillStyle = _this.lastPick.fillStyle;
-                            _this.lastPick = { node: node, fillStyle: node.fillStyle };
-                        }
-                        node.fillStyle = 'yellow';
-                    }
-                }
-                else if (_this.lastPick) {
-                    _this.lastPick.node.fillStyle = _this.lastPick.fillStyle;
-                    _this.lastPick = undefined;
-                }
-            }
-        };
-        this._isDirty = false;
+        this._dirty = false;
         this._root = null;
         this._frameIndex = 0;
-        this._isRenderFrameIndex = false;
+        this._renderFrameIndex = false;
         this.render = function () {
             var ctx = _this.ctx;
+            // start with a blank canvas, clear previous drawing
             ctx.clearRect(0, 0, _this.width, _this.height);
             if (_this.root) {
                 ctx.save();
-                if (_this.root.isVisible) {
+                if (_this.root.visible) {
                     _this.root.render(ctx);
                 }
                 ctx.restore();
             }
             _this._frameIndex++;
-            if (_this.isRenderFrameIndex) {
+            if (_this.renderFrameIndex) {
                 ctx.fillStyle = 'white';
                 ctx.fillRect(0, 0, 40, 15);
                 ctx.fillStyle = 'black';
                 ctx.fillText(_this.frameIndex.toString(), 0, 10);
             }
-            _this.isDirty = false;
+            _this.dirty = false;
         };
         this.hdpiCanvas = new hdpiCanvas_1.HdpiCanvas(this._width = width, this._height = height);
         this.ctx = this.hdpiCanvas.context;
-        this.setupListeners(this.hdpiCanvas.canvas); // debug
     }
+    Scene.prototype.createId = function () {
+        return this.constructor.name + '-' + (Scene.id++);
+    };
+    ;
     Object.defineProperty(Scene.prototype, "parent", {
         get: function () {
             return this.hdpiCanvas.parent;
@@ -69,31 +49,8 @@ var Scene = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
-    Scene.prototype.createId = function () {
-        return this.constructor.name + '-' + (Scene.id++);
-    };
-    ;
-    Scene.prototype.setupListeners = function (canvas) {
-        canvas.addEventListener('mousemove', this.onMouseMove);
-    };
-    Scene.prototype.pickNode = function (node, x, y) {
-        if (!node.isVisible || !node.isPointInNode(x, y)) {
-            return;
-        }
-        var children = node.children;
-        if (children.length) {
-            // Nodes added later should be hit-tested first,
-            // as they are rendered on top of the previously added nodes.
-            for (var i = children.length - 1; i >= 0; i--) {
-                var hit = this.pickNode(children[i], x, y);
-                if (hit) {
-                    return hit;
-                }
-            }
-        }
-        else if (node instanceof shape_1.Shape) {
-            return node;
-        }
+    Scene.prototype.download = function (options) {
+        this.hdpiCanvas.download(options);
     };
     Object.defineProperty(Scene.prototype, "width", {
         get: function () {
@@ -120,21 +77,21 @@ var Scene = /** @class */ (function () {
             if (this._width !== value[0] || this._height !== value[1]) {
                 this.hdpiCanvas.resize(value[0], value[1]);
                 this._width = value[0], this._height = value[1];
-                this.isDirty = true;
+                this.dirty = true;
             }
         },
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(Scene.prototype, "isDirty", {
+    Object.defineProperty(Scene.prototype, "dirty", {
         get: function () {
-            return this._isDirty;
+            return this._dirty;
         },
         set: function (dirty) {
-            if (dirty && !this._isDirty) {
+            if (dirty && !this._dirty) {
                 requestAnimationFrame(this.render);
             }
-            this._isDirty = dirty;
+            this._dirty = dirty;
         },
         enumerable: true,
         configurable: true
@@ -144,8 +101,9 @@ var Scene = /** @class */ (function () {
             return this._root;
         },
         set: function (node) {
-            if (node === this._root)
+            if (node === this._root) {
                 return;
+            }
             if (this._root) {
                 this._root._setScene(null);
             }
@@ -157,7 +115,7 @@ var Scene = /** @class */ (function () {
                 }
                 node._setScene(this);
             }
-            this.isDirty = true;
+            this.dirty = true;
         },
         enumerable: true,
         configurable: true
@@ -193,14 +151,14 @@ var Scene = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(Scene.prototype, "isRenderFrameIndex", {
+    Object.defineProperty(Scene.prototype, "renderFrameIndex", {
         get: function () {
-            return this._isRenderFrameIndex;
+            return this._renderFrameIndex;
         },
         set: function (value) {
-            if (this._isRenderFrameIndex !== value) {
-                this._isRenderFrameIndex = value;
-                this.isDirty = true;
+            if (this._renderFrameIndex !== value) {
+                this._renderFrameIndex = value;
+                this.dirty = true;
             }
         },
         enumerable: true,

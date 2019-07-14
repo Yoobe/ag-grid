@@ -1,8 +1,7 @@
-// ag-grid-enterprise v20.1.0
+// ag-grid-enterprise v21.0.1
 export declare class EnterpriseBoot {
     private filterManager;
-    private cellEditorFactory;
     private licenseManager;
-    private componentProvider;
+    private userComponentRegistry;
     private init;
 }

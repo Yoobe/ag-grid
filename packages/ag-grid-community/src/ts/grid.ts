@@ -32,16 +32,15 @@ import { CellNavigationService } from "./cellNavigationService";
 import { FilterStage } from "./rowModels/clientSide/filterStage";
 import { SortStage } from "./rowModels/clientSide/sortStage";
 import { FlattenStage } from "./rowModels/clientSide/flattenStage";
-import { CellEditorFactory } from "./rendering/cellEditorFactory";
 import { Events, GridReadyEvent } from "./events";
 import { InfiniteRowModel } from "./rowModels/infinite/infiniteRowModel";
 import { ClientSideRowModel } from "./rowModels/clientSide/clientSideRowModel";
 import { CellRendererFactory } from "./rendering/cellRendererFactory";
-import { CellRendererService } from "./rendering/cellRendererService";
 import { ValueFormatterService } from "./rendering/valueFormatterService";
 import { AgCheckbox } from "./widgets/agCheckbox";
-import { BaseFrameworkFactory } from "./baseFrameworkFactory";
-import { IFrameworkFactory } from "./interfaces/iFrameworkFactory";
+import { AgRadioButton } from "./widgets/agRadioButton";
+import { VanillaFrameworkOverrides } from "./vanillaFrameworkOverrides";
+import { IFrameworkOverrides } from "./interfaces/iFrameworkOverrides";
 import { ScrollVisibleService } from "./gridPanel/scrollVisibleService";
 import { Downloader } from "./exporter/downloader";
 import { XmlFactory } from "./exporter/xmlFactory";
@@ -60,9 +59,8 @@ import { ValueCache } from "./valueService/valueCache";
 import { ChangeDetectionService } from "./valueService/changeDetectionService";
 import { AlignedGridsService } from "./alignedGridsService";
 import { PinnedRowModel } from "./rowModels/pinnedRowModel";
-import { ComponentResolver } from "./components/framework/componentResolver";
-import { ComponentRecipes } from "./components/framework/componentRecipes";
-import { ComponentProvider } from "./components/framework/componentProvider";
+import { UserComponentFactory } from "./components/framework/userComponentFactory";
+import { UserComponentRegistry } from "./components/framework/userComponentRegistry";
 import { AgComponentUtils } from "./components/framework/agComponentUtils";
 import { ComponentMetadataProvider } from "./components/framework/componentMetadataProvider";
 import { Beans } from "./rendering/beans";
@@ -77,6 +75,8 @@ import { ResizeObserverService } from "./misc/resizeObserverService";
 import { ZipContainer } from "./exporter/files/zip/zipContainer";
 import { _ } from "./utils";
 import { TooltipManager } from "./widgets/tooltipManager";
+import { OverlayWrapperComponent } from "./rendering/overlays/overlayWrapperComponent";
+import { Module } from "./interfaces/iModule";
 
 export interface GridParams {
     // used by Web Components
@@ -88,7 +88,7 @@ export interface GridParams {
     quickFilterOnScope?: any;
 
     // this allows the base frameworks (React, NG2, etc) to provide alternative cellRenderers and cellEditors
-    frameworkFactory?: IFrameworkFactory;
+    frameworkOverrides?: IFrameworkOverrides;
 
     //bean instances to add to the context
     seedBeanInstances?: {[key:string]:any};
@@ -98,10 +98,13 @@ export class Grid {
 
     private context: Context;
 
-    private static enterpriseBeans: any[];
+    private static enterpriseBeans: any[] = [];
     private static frameworkBeans: any[];
-    private static enterpriseComponents: any[];
-    private static enterpriseDefaultComponents: any[];
+    private static enterpriseComponents: any[] = [];
+    private static enterpriseDefaultComponents: any[] = [];
+
+    private static modulesToInclude: Module[] = [];
+
     protected logger: Logger;
 
     private gridOptions: GridOptions;
@@ -114,22 +117,27 @@ export class Grid {
     };
 
     public static setEnterpriseBeans(enterpriseBeans: any[], rowModelClasses: any): void {
-        this.enterpriseBeans = enterpriseBeans;
+        Grid.enterpriseBeans = enterpriseBeans;
 
         // the enterprise can inject additional row models. this is how it injects the viewportRowModel
         _.iterateObject(rowModelClasses, (key: string, value: any) => Grid.RowModelClasses[key] = value);
     }
 
     public static setEnterpriseComponents(components: any[]): void {
-        this.enterpriseComponents = components;
+        Grid.enterpriseComponents = components;
     }
 
     public static setFrameworkBeans(frameworkBeans: any[]): void {
-        this.frameworkBeans = frameworkBeans;
+        Grid.frameworkBeans = frameworkBeans;
     }
 
     public static setEnterpriseDefaultComponents(enterpriseDefaultComponents: any[]): void {
-        this.enterpriseDefaultComponents = enterpriseDefaultComponents;
+        Grid.enterpriseDefaultComponents = enterpriseDefaultComponents;
+    }
+
+    public static addModule(modulesToInclude: Module[]): void {
+        // de-duping would need to be done here (while ensuring order etc)
+        Grid.modulesToInclude.push(...modulesToInclude);
     }
 
     constructor(eGridDiv: HTMLElement, gridOptions: GridOptions, params?: GridParams) {
@@ -145,17 +153,23 @@ export class Grid {
 
         const rowModelClass = this.getRowModelClass(gridOptions);
 
-        const enterprise = _.exists(Grid.enterpriseBeans);
+        const enterprise = !_.missingOrEmpty(Grid.enterpriseBeans);
 
-        let frameworkFactory = params ? params.frameworkFactory : null;
-        if (_.missing(frameworkFactory)) {
-            frameworkFactory = new BaseFrameworkFactory();
+        const moduleBeans = this.extractModuleEntity(Grid.modulesToInclude, (module) => module.beans ? module.beans : []);
+        const moduleEnterpriseBeans = this.extractModuleEntity(Grid.modulesToInclude, (module) => module.enterpriseBeans ? module.enterpriseBeans : []);
+        const moduleEnterpriseComponents = this.extractModuleEntity(Grid.modulesToInclude, (module) => module.enterpriseComponents ? module.enterpriseComponents : []);
+        const modulesEnterpriseDefaultComponents = this.extractModuleEntity(Grid.modulesToInclude, (module) => module.enterpriseDefaultComponents ? module.enterpriseDefaultComponents : []);
+
+        let frameworkOverrides = params ? params.frameworkOverrides : null;
+        if (_.missing(frameworkOverrides)) {
+            frameworkOverrides = new VanillaFrameworkOverrides();
         }
 
         let overrideBeans:any[] = [];
 
         if (Grid.enterpriseBeans) {
-            overrideBeans = overrideBeans.concat(Grid.enterpriseBeans);
+            overrideBeans = overrideBeans.concat(Grid.enterpriseBeans)
+                .concat(moduleEnterpriseBeans);
         }
 
         if (Grid.frameworkBeans) {
@@ -170,7 +184,7 @@ export class Grid {
             $compile: params ? params.$compile : null,
             quickFilterOnScope: params ? params.quickFilterOnScope : null,
             globalEventListener: params ? params.globalEventListener : null,
-            frameworkFactory: frameworkFactory
+            frameworkOverrides: frameworkOverrides
         };
         if (params && params.seedBeanInstances) {
             _.assign(seed, params.seedBeanInstances);
@@ -178,13 +192,16 @@ export class Grid {
 
         let components = [
             {componentName: 'AgCheckbox', theClass: AgCheckbox},
+            {componentName: 'AgRadioButton', theClass: AgRadioButton},
             {componentName: 'AgGridComp', theClass: GridPanel},
             {componentName: 'AgHeaderRoot', theClass: HeaderRootComp},
             {componentName: 'AgPagination', theClass: PaginationComp},
+            {componentName: 'AgOverlayWrapper', theClass: OverlayWrapperComponent}
         ];
 
         if (Grid.enterpriseComponents) {
-            components = components.concat(Grid.enterpriseComponents);
+            components = components.concat(Grid.enterpriseComponents)
+                .concat(moduleEnterpriseComponents);
         }
 
         const contextParams = {
@@ -192,21 +209,24 @@ export class Grid {
             seed: seed,
             //Careful with the order of the beans here, there are dependencies between them that need to be kept
             beans: [
-                rowModelClass, Beans, PaginationAutoPageSizeService, GridApi, ComponentProvider, AgComponentUtils,
-                ComponentMetadataProvider, ResizeObserverService, ComponentProvider, ComponentResolver,
-                ComponentRecipes, MaxDivHeightScaler, AutoHeightCalculator, CellRendererFactory, HorizontalResizeService,
+                // this should only contain SERVICES, it should NEVER contain COMPONENTS
+                rowModelClass, Beans, PaginationAutoPageSizeService, GridApi, UserComponentRegistry, AgComponentUtils,
+                ComponentMetadataProvider, ResizeObserverService, UserComponentRegistry, UserComponentFactory,
+                MaxDivHeightScaler, AutoHeightCalculator, CellRendererFactory, HorizontalResizeService,
                 PinnedRowModel, DragService, DisplayedGroupCreator, EventService, GridOptionsWrapper, PopupService,
                 SelectionController, FilterManager, ColumnController, PaginationProxy, RowRenderer, ExpressionService,
                 ColumnFactory, CsvCreator, Downloader, XmlFactory, GridSerializer, TemplateService, AlignedGridsService,
                 NavigationService, PopupService, ValueCache, ValueService, LoggerFactory, ColumnUtils, AutoWidthCalculator,
                 StandardMenuFactory, DragAndDropService, ColumnApi, FocusedCellController, MouseEventService, Environment,
-                CellNavigationService, FilterStage, SortStage, FlattenStage, FilterService, CellEditorFactory,
-                CellRendererService, ValueFormatterService, StylingService, ScrollVisibleService, SortController,
+                CellNavigationService, FilterStage, SortStage, FlattenStage, FilterService,
+                ValueFormatterService, StylingService, ScrollVisibleService, SortController,
                 ColumnHoverService, ColumnAnimationService, SortService, SelectableService, AutoGroupColService,
-                ImmutableService, ChangeDetectionService, , AnimationFrameService, TooltipManager, ZipContainer
+                ImmutableService, ChangeDetectionService, AnimationFrameService, TooltipManager, ZipContainer,
+                ...moduleBeans
             ],
             components: components,
-            enterpriseDefaultComponents: Grid.enterpriseDefaultComponents,
+            enterpriseDefaultComponents: Grid.enterpriseDefaultComponents.concat(modulesEnterpriseDefaultComponents),
+            registeredModules: Grid.modulesToInclude.map(module => module.moduleName),
             debug: !!gridOptions.debug
         };
 
@@ -220,6 +240,10 @@ export class Grid {
         this.setColumnsAndData();
         this.dispatchGridReadyEvent(gridOptions);
         this.logger.log(`initialised successfully, enterprise = ${enterprise}`);
+    }
+
+    private extractModuleEntity(moduleEntities: any[], extractor: (module: any) => any) {
+        return [].concat(...moduleEntities.map(extractor));
     }
 
     private setColumnsAndData(): void {

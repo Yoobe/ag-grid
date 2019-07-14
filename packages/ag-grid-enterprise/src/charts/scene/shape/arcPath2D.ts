@@ -1,11 +1,14 @@
-import {Shape} from "./shape";
-import {chainObjects} from "../../util/object";
+import { Shape } from "./shape";
+import { chainObjects } from "../../util/object";
 
 /**
  * Circular arc node that uses the experimental `Path2D` class to define
  * the arc path for further rendering and hit-testing.
  */
 export class Arc extends Shape {
+
+    static className = 'Arc';
+
     // Declare a path to feed to `context.fill/stroke` using experimental native Path2D class.
     // Doesn't work in IE.
     protected path = new Path2D();
@@ -14,7 +17,7 @@ export class Arc extends Shape {
     set x(value: number) {
         if (this._x !== value) {
             this._x = value;
-            this.isDirty = true;
+            this.dirty = true;
         }
     }
     get x(): number {
@@ -25,7 +28,7 @@ export class Arc extends Shape {
     set y(value: number) {
         if (this._y !== value) {
             this._y = value;
-            this.isDirty = true;
+            this.dirty = true;
         }
     }
     get y(): number {
@@ -36,7 +39,7 @@ export class Arc extends Shape {
     set radius(value: number) {
         if (this._radius !== value) {
             this._radius = value;
-            this.isDirty = true;
+            this.dirty = true;
         }
     }
     get radius(): number {
@@ -47,7 +50,7 @@ export class Arc extends Shape {
     set startAngle(value: number) {
         if (this._startAngle !== value) {
             this._startAngle = value;
-            this.isDirty = true;
+            this.dirty = true;
         }
     }
     get startAngle(): number {
@@ -58,28 +61,28 @@ export class Arc extends Shape {
     set endAngle(value: number) {
         if (this._endAngle !== value) {
             this._endAngle = value;
-            this.isDirty = true;
+            this.dirty = true;
         }
     }
     get endAngle(): number {
         return this._endAngle;
     }
 
-    private _isCounterClockwise: boolean = false;
-    set isCounterClockwise(value: boolean) {
-        if (this._isCounterClockwise !== value) {
-            this._isCounterClockwise = value;
-            this.isDirty = true;
+    private _counterClockwise: boolean = false;
+    set counterClockwise(value: boolean) {
+        if (this._counterClockwise !== value) {
+            this._counterClockwise = value;
+            this.dirty = true;
         }
     }
-    get isCounterClockwise(): boolean {
-        return this._isCounterClockwise;
+    get counterClockwise(): boolean {
+        return this._counterClockwise;
     }
 
     updatePath() {
         this.path = new Path2D();
         // No way to clear existing Path2D, have to create a new one each time.
-        this.path.arc(this.x, this.y, this.radius, this.startAngle, this.endAngle, this.isCounterClockwise);
+        this.path.arc(this.x, this.y, this.radius, this.startAngle, this.endAngle, this.counterClockwise);
         this.path.closePath();
     }
 
@@ -97,7 +100,7 @@ export class Arc extends Shape {
     render(ctx: CanvasRenderingContext2D): void {
         // Path2D approach:
         this.updatePath();
-        this.applyContextAttributes(ctx);
+        // this.applyContextAttributes(ctx);
         ctx.fill(this.path);
         ctx.stroke(this.path);
 
@@ -111,6 +114,6 @@ export class Arc extends Shape {
         // About 15% performance loss for re-creating and retaining a Path2D
         // object for hit testing.
 
-        this.isDirty = false;
+        this.dirty = false;
     }
 }

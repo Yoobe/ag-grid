@@ -1,81 +1,32 @@
-import {HdpiCanvas} from "../canvas/hdpiCanvas";
-import {Node} from "./node";
-import {Path2D} from "./path2D";
-import {Shape} from "./shape/shape";
+import { HdpiCanvas, DownloadOptions } from "../canvas/hdpiCanvas";
+import { Node } from "./node";
+import { Path2D } from "./path2D";
 
 export class Scene {
-    constructor(width = 800, height = 600) {
-        this.hdpiCanvas = new HdpiCanvas(this._width = width, this._height = height);
-        this.ctx = this.hdpiCanvas.context;
-        this.setupListeners(this.hdpiCanvas.canvas); // debug
-    }
-
-    set parent(value: HTMLElement | null) {
-        this.hdpiCanvas.parent = value;
-    }
-    get parent(): HTMLElement | null {
-        return this.hdpiCanvas.parent;
-    }
 
     private static id = 1;
+    readonly id: string = this.createId();
     private createId(): string {
         return (this.constructor as any).name + '-' + (Scene.id++);
     };
-    readonly id: string = this.createId();
 
-    private readonly hdpiCanvas: HdpiCanvas;
+    readonly hdpiCanvas: HdpiCanvas;
     private readonly ctx: CanvasRenderingContext2D;
 
-    private setupListeners(canvas: HTMLCanvasElement) {
-        canvas.addEventListener('mousemove', this.onMouseMove);
+    constructor(width = 800, height = 600) {
+        this.hdpiCanvas = new HdpiCanvas(this._width = width, this._height = height);
+        this.ctx = this.hdpiCanvas.context;
     }
 
-    private lastPick?: { // debug
-        node: Shape,
-        fillStyle: string | null
-    };
-    private onMouseMove = (e: MouseEvent) => { // debug
-        const x = e.offsetX;
-        const y = e.offsetY;
+    set parent(value: HTMLElement | undefined) {
+        this.hdpiCanvas.parent = value;
+    }
+    get parent(): HTMLElement | undefined {
+        return this.hdpiCanvas.parent;
+    }
 
-        if (this.root) {
-            const node = this.pickNode(this.root, x, y);
-            if (node) {
-                if (node instanceof Shape) {
-                    if (!this.lastPick) {
-                        this.lastPick = { node, fillStyle: node.fillStyle };
-                    } else if (this.lastPick.node !== node) {
-                        this.lastPick.node.fillStyle = this.lastPick.fillStyle;
-                        this.lastPick = { node, fillStyle: node.fillStyle };
-                    }
-                    node.fillStyle = 'yellow';
-                }
-            } else if (this.lastPick) {
-                this.lastPick.node.fillStyle = this.lastPick.fillStyle;
-                this.lastPick = undefined;
-            }
-        }
-    };
-
-    pickNode(node: Node, x: number, y: number): Node | undefined {
-        if (!node.isVisible || !node.isPointInNode(x, y)) {
-            return;
-        }
-
-        const children = node.children;
-
-        if (children.length) {
-            // Nodes added later should be hit-tested first,
-            // as they are rendered on top of the previously added nodes.
-            for (let i = children.length - 1; i >= 0; i--) {
-                const hit = this.pickNode(children[i], x, y);
-                if (hit) {
-                    return hit;
-                }
-            }
-        } else if (node instanceof Shape) {
-            return node;
-        }
+    download(options?: DownloadOptions) {
+        this.hdpiCanvas.download(options);
     }
 
     private _width: number;
@@ -98,25 +49,26 @@ export class Scene {
         if (this._width !== value[0] || this._height !== value[1]) {
             this.hdpiCanvas.resize(value[0], value[1]);
             [this._width, this._height] = value;
-            this.isDirty = true;
+            this.dirty = true;
         }
     }
 
-    _isDirty = false;
-    set isDirty(dirty: boolean) {
-        if (dirty && !this._isDirty) {
+    private _dirty = false;
+    set dirty(dirty: boolean) {
+        if (dirty && !this._dirty) {
             requestAnimationFrame(this.render);
         }
-        this._isDirty = dirty;
+        this._dirty = dirty;
     }
-    get isDirty(): boolean {
-        return this._isDirty;
+    get dirty(): boolean {
+        return this._dirty;
     }
 
     _root: Node | null = null;
     set root(node: Node | null) {
-        if (node === this._root)
+        if (node === this._root) {
             return;
+        }
 
         if (this._root) {
             this._root._setScene(null);
@@ -132,7 +84,7 @@ export class Scene {
             node._setScene(this);
         }
 
-        this.isDirty = true;
+        this.dirty = true;
     }
     get root(): Node | null {
         return this._root;
@@ -173,39 +125,39 @@ export class Scene {
         return this._frameIndex;
     }
 
-    _isRenderFrameIndex = false;
-    set isRenderFrameIndex(value: boolean) {
-        if (this._isRenderFrameIndex !== value) {
-            this._isRenderFrameIndex = value;
-            this.isDirty = true;
+    private _renderFrameIndex = false;
+    set renderFrameIndex(value: boolean) {
+        if (this._renderFrameIndex !== value) {
+            this._renderFrameIndex = value;
+            this.dirty = true;
         }
     }
-    get isRenderFrameIndex(): boolean {
-        return this._isRenderFrameIndex;
+    get renderFrameIndex(): boolean {
+        return this._renderFrameIndex;
     }
 
-
-    render = () => {
+    readonly render = () => {
         const ctx = this.ctx;
 
+        // start with a blank canvas, clear previous drawing
         ctx.clearRect(0, 0, this.width, this.height);
 
         if (this.root) {
             ctx.save();
-            if (this.root.isVisible) {
+            if (this.root.visible) {
                 this.root.render(ctx);
             }
             ctx.restore();
         }
 
         this._frameIndex++;
-        if (this.isRenderFrameIndex) {
+        if (this.renderFrameIndex) {
             ctx.fillStyle = 'white';
             ctx.fillRect(0, 0, 40, 15);
             ctx.fillStyle = 'black';
             ctx.fillText(this.frameIndex.toString(), 0, 10);
         }
 
-        this.isDirty = false;
+        this.dirty = false;
     };
 }

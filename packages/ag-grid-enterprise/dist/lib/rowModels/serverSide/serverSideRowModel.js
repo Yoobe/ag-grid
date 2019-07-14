@@ -1,4 +1,4 @@
-// ag-grid-enterprise v20.1.0
+// ag-grid-enterprise v21.0.1
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
@@ -43,9 +43,6 @@ var ServerSideRowModel = /** @class */ (function (_super) {
         if (ag_grid_community_1._.exists(datasource)) {
             this.setDatasource(datasource);
         }
-    };
-    ServerSideRowModel.prototype.destroy = function () {
-        _super.prototype.destroy.call(this);
     };
     ServerSideRowModel.prototype.destroyDatasource = function () {
         if (this.datasource) {
@@ -193,8 +190,9 @@ var ServerSideRowModel = /** @class */ (function (_super) {
         }
         var shouldAnimate = function () {
             var rowAnimationEnabled = _this.gridOptionsWrapper.isAnimateRows();
-            if (rowNode.master)
+            if (rowNode.master) {
                 return rowAnimationEnabled && rowNode.expanded;
+            }
             return rowAnimationEnabled;
         };
         this.updateRowIndexesAndBounds();
@@ -213,7 +211,7 @@ var ServerSideRowModel = /** @class */ (function (_super) {
         this.rootNode = new ag_grid_community_1.RowNode();
         this.rootNode.group = true;
         this.rootNode.level = -1;
-        this.context.wireBean(this.rootNode);
+        this.getContext().wireBean(this.rootNode);
         if (this.datasource) {
             this.createNewRowNodeBlockLoader();
             this.cacheParams = this.createCacheParams();
@@ -246,7 +244,7 @@ var ServerSideRowModel = /** @class */ (function (_super) {
         var maxConcurrentRequests = this.gridOptionsWrapper.getMaxConcurrentDatasourceRequests();
         var blockLoadDebounceMillis = this.gridOptionsWrapper.getBlockLoadDebounceMillis();
         this.rowNodeBlockLoader = new ag_grid_community_1.RowNodeBlockLoader(maxConcurrentRequests, blockLoadDebounceMillis);
-        this.context.wireBean(this.rowNodeBlockLoader);
+        this.getContext().wireBean(this.rowNodeBlockLoader);
     };
     ServerSideRowModel.prototype.destroyRowNodeBlockLoader = function () {
         if (this.rowNodeBlockLoader) {
@@ -321,7 +319,7 @@ var ServerSideRowModel = /** @class */ (function (_super) {
     };
     ServerSideRowModel.prototype.createNodeCache = function (rowNode) {
         var cache = new serverSideCache_1.ServerSideCache(this.cacheParams, rowNode);
-        this.context.wireBean(cache);
+        this.getContext().wireBean(cache);
         cache.addEventListener(ag_grid_community_1.RowNodeCache.EVENT_CACHE_UPDATED, this.onCacheUpdated.bind(this));
         rowNode.childrenCache = cache;
     };
@@ -540,7 +538,7 @@ var ServerSideRowModel = /** @class */ (function (_super) {
         }
         else {
             var detailNode = new ag_grid_community_1.RowNode();
-            this.context.wireBean(detailNode);
+            this.getContext().wireBean(detailNode);
             detailNode.detail = true;
             detailNode.selectable = false;
             detailNode.parent = masterNode;
@@ -556,6 +554,9 @@ var ServerSideRowModel = /** @class */ (function (_super) {
             return detailNode;
         }
     };
+    ServerSideRowModel.prototype.isLoading = function () {
+        return this.rowNodeBlockLoader ? this.rowNodeBlockLoader.isLoading() : false;
+    };
     __decorate([
         ag_grid_community_1.Autowired('gridOptionsWrapper'),
         __metadata("design:type", ag_grid_community_1.GridOptionsWrapper)
@@ -564,10 +565,6 @@ var ServerSideRowModel = /** @class */ (function (_super) {
         ag_grid_community_1.Autowired('eventService'),
         __metadata("design:type", ag_grid_community_1.EventService)
     ], ServerSideRowModel.prototype, "eventService", void 0);
-    __decorate([
-        ag_grid_community_1.Autowired('context'),
-        __metadata("design:type", ag_grid_community_1.Context)
-    ], ServerSideRowModel.prototype, "context", void 0);
     __decorate([
         ag_grid_community_1.Autowired('columnController'),
         __metadata("design:type", ag_grid_community_1.ColumnController)
@@ -598,12 +595,6 @@ var ServerSideRowModel = /** @class */ (function (_super) {
         __metadata("design:paramtypes", []),
         __metadata("design:returntype", void 0)
     ], ServerSideRowModel.prototype, "postConstruct", null);
-    __decorate([
-        ag_grid_community_1.PreDestroy,
-        __metadata("design:type", Function),
-        __metadata("design:paramtypes", []),
-        __metadata("design:returntype", void 0)
-    ], ServerSideRowModel.prototype, "destroy", null);
     __decorate([
         ag_grid_community_1.PreDestroy,
         __metadata("design:type", Function),

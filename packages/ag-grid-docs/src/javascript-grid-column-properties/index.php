@@ -66,6 +66,10 @@ include '../documentation-main/documentation_header.php';
             <td>Filter component to use for this column. Set to true to use the default filter.</td>
         </tr>
         <tr>
+            <th>filterParams</th>
+            <td>Custom params to be passed to filter component.</td>
+        </tr>
+        <tr>
             <th>floatingFilterComponent<br/>floatingFilterComponentFramework</th>
             <td>Floating filter component to use for this column.</td>
         </tr>
@@ -163,9 +167,17 @@ include '../documentation-main/documentation_header.php';
             <td>cellRenderer to use for this column.</td>
         </tr>
         <tr>
-            <th>floatingCellRenderer<br/>floatingCellRendererFramework</th>
+            <th>cellRendererParams</th>
+            <td>Params to be passed to cell renderer component.</td>
+        </tr>
+        <tr>
+            <th>pinnedRowCellRenderer<br/>pinnedRowCellRendererFramework</th>
             <td>cellRenderer to use for pinned rows in this column. Floating cells will use floatingCellRenderer if available,
                 if not then cellRenderer.</td>
+        </tr>
+        <tr>
+            <th>pinnedRowCellRendererParams</th>
+            <td>Params to be passed to pinned row cell renderer component.</td>
         </tr>
         <tr>
             <th>cellRendererSelector<br/>cellEditorSelector</th>
@@ -175,6 +187,20 @@ include '../documentation-main/documentation_header.php';
             <th>cellEditor<br/>cellEditorFramework</th>
             <td>cellEditor to use for this column.</td>
         </tr>
+        <tr>
+            <th>cellEditorParams</th>
+            <td>Params to be passed to cell editor component.</td>
+        </tr>
+
+        <tr>
+            <th>headerComponent<br/>headerComponentFramework</th>
+            <td>Header component to use for this column.</td>
+        </tr>
+        <tr>
+            <th>headerComponentParams</th>
+            <td>Params to be passed to header component.</td>
+        </tr>
+
 
         <?php include '../javascript-grid-value-getters/gettersAndFormattersProperties.php' ?>
         <?php printPropertiesRows($gettersAndFormattersProperties) ?>
@@ -308,6 +334,10 @@ include '../documentation-main/documentation_header.php';
             <th>singleClickEdit</th>
             <td>Set to true to have cells under this column enter edit mode after single click.</td>
         </tr>
+        <tr>
+            <th>chartDataType</th>
+            <td>Defines the chart data type that should be used for a column: <code>'category' | 'series' | 'excluded' | undefined</code>.</td>
+        </tr>
 
         <tr class="title-row">
             <!-- TITLE ROW -->
@@ -334,6 +364,14 @@ include '../documentation-main/documentation_header.php';
         <tr>
             <th>headerGroupTooltip</th>
             <td>Tooltip for the column group header</td>
+        </tr>
+        <tr>
+            <th>headerGroupComponent<br/>headerGroupComponentFramework</th>
+            <td>Component to use header group.</td>
+        </tr>
+        <tr>
+            <th>headerGroupComponentParams</th>
+            <td>Params for the header group component.</td>
         </tr>
     </table>
 

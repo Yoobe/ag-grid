@@ -5,8 +5,9 @@ import { GridApi } from "./gridApi";
 import { ColumnApi } from "./columnController/columnApi";
 import { OriginalColumnGroup } from "./entities/originalColumnGroup";
 import { FilterRequestSource } from "./filter/filterManager";
+import { Dialog } from "./widgets/dialog";
 
-export {Events} from './eventKeys';
+export { Events } from './eventKeys';
 
 export interface ModelUpdatedEvent extends AgGridEvent {
     /** If true, the grid will try and animate the rows to the new positions */
@@ -32,7 +33,7 @@ export interface AgGridEvent extends AgEvent {
 }
 
 export interface ToolPanelVisibleChangedEvent extends AgGridEvent {
-    source: string;
+    source: string | undefined;
 }
 
 export interface AnimationQueueEmptyEvent extends AgGridEvent {
@@ -158,6 +159,9 @@ export interface FirstDataRenderedEvent extends AgGridEvent {
 export interface RangeSelectionChangedEvent extends AgGridEvent {
     finished: boolean;
     started: boolean;
+}
+
+export interface ChartRangeSelectionChanged extends AgGridEvent {
 }
 
 export interface ColumnGroupOpenedEvent extends AgGridEvent {

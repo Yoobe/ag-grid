@@ -32,14 +32,13 @@ import {
     RowRenderer
 } from "ag-grid-community";
 import { ServerSideCache, ServerSideCacheParams } from "./serverSideCache";
-import {ServerSideBlock} from "./serverSideBlock";
+import { ServerSideBlock } from "./serverSideBlock";
 
 @Bean('rowModel')
 export class ServerSideRowModel extends BeanStub implements IServerSideRowModel {
 
     @Autowired('gridOptionsWrapper') private gridOptionsWrapper: GridOptionsWrapper;
     @Autowired('eventService') private eventService: EventService;
-    @Autowired('context') private context: Context;
     @Autowired('columnController') private columnController: ColumnController;
     @Autowired('filterManager') private filterManager: FilterManager;
     @Autowired('sortController') private sortController: SortController;
@@ -70,11 +69,6 @@ export class ServerSideRowModel extends BeanStub implements IServerSideRowModel 
         if (_.exists(datasource)) {
             this.setDatasource(datasource!);
         }
-    }
-
-    @PreDestroy
-    public destroy(): void {
-        super.destroy();
     }
 
     @PreDestroy
@@ -249,8 +243,8 @@ export class ServerSideRowModel extends BeanStub implements IServerSideRowModel 
         }
 
         const shouldAnimate = () => {
-            let rowAnimationEnabled = this.gridOptionsWrapper.isAnimateRows();
-            if (rowNode.master) return rowAnimationEnabled && rowNode.expanded;
+            const rowAnimationEnabled = this.gridOptionsWrapper.isAnimateRows();
+            if (rowNode.master) { return rowAnimationEnabled && rowNode.expanded; }
             return rowAnimationEnabled;
         };
 
@@ -269,14 +263,12 @@ export class ServerSideRowModel extends BeanStub implements IServerSideRowModel 
         this.eventService.dispatchEvent(modelUpdatedEvent);
     }
 
-
-
     private reset(): void {
 
         this.rootNode = new RowNode();
         this.rootNode.group = true;
         this.rootNode.level = -1;
-        this.context.wireBean(this.rootNode);
+        this.getContext().wireBean(this.rootNode);
 
         if (this.datasource) {
             this.createNewRowNodeBlockLoader();
@@ -314,7 +306,7 @@ export class ServerSideRowModel extends BeanStub implements IServerSideRowModel 
         const maxConcurrentRequests = this.gridOptionsWrapper.getMaxConcurrentDatasourceRequests();
         const blockLoadDebounceMillis = this.gridOptionsWrapper.getBlockLoadDebounceMillis();
         this.rowNodeBlockLoader = new RowNodeBlockLoader(maxConcurrentRequests, blockLoadDebounceMillis);
-        this.context.wireBean(this.rowNodeBlockLoader);
+        this.getContext().wireBean(this.rowNodeBlockLoader);
     }
 
     private destroyRowNodeBlockLoader(): void {
@@ -402,7 +394,7 @@ export class ServerSideRowModel extends BeanStub implements IServerSideRowModel 
 
     private createNodeCache(rowNode: RowNode): void {
         const cache = new ServerSideCache(this.cacheParams, rowNode);
-        this.context.wireBean(cache);
+        this.getContext().wireBean(cache);
 
         cache.addEventListener(RowNodeCache.EVENT_CACHE_UPDATED, this.onCacheUpdated.bind(this));
 
@@ -665,7 +657,7 @@ export class ServerSideRowModel extends BeanStub implements IServerSideRowModel 
             return masterNode.detailNode;
         } else {
             const detailNode = new RowNode();
-            this.context.wireBean(detailNode);
+            this.getContext().wireBean(detailNode);
             detailNode.detail = true;
             detailNode.selectable = false;
 
@@ -683,5 +675,9 @@ export class ServerSideRowModel extends BeanStub implements IServerSideRowModel 
             masterNode.detailNode = detailNode;
             return detailNode;
         }
+    }
+
+    public isLoading(): boolean {
+        return this.rowNodeBlockLoader ? this.rowNodeBlockLoader.isLoading() : false;
     }
 }

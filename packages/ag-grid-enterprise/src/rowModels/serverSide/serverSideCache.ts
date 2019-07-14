@@ -16,7 +16,7 @@ import {
     RowNodeCache,
     RowNodeCacheParams
 } from "ag-grid-community";
-import {ServerSideBlock} from "./serverSideBlock";
+import { ServerSideBlock } from "./serverSideBlock";
 
 export interface ServerSideCacheParams extends RowNodeCacheParams {
     rowGroupCols: ColumnVO[];
@@ -30,7 +30,6 @@ export interface ServerSideCacheParams extends RowNodeCacheParams {
 export class ServerSideCache extends RowNodeCache<ServerSideBlock, ServerSideCacheParams> implements IServerSideCache {
 
     @Autowired('eventService') private eventService: EventService;
-    @Autowired('context') private context: Context;
     @Autowired('gridOptionsWrapper') private gridOptionsWrapper: GridOptionsWrapper;
 
     // this will always be zero for the top level cache only,
@@ -314,7 +313,7 @@ export class ServerSideCache extends RowNodeCache<ServerSideBlock, ServerSideCac
     private createBlock(blockNumber: number, displayIndex: number, nextRowTop: { value: number }): ServerSideBlock {
 
         const newBlock = new ServerSideBlock(blockNumber, this.parentRowNode, this.cacheParams, this);
-        this.context.wireBean(newBlock);
+        this.getContext().wireBean(newBlock);
 
         const displayIndexSequence = new NumberSequence(displayIndex);
 

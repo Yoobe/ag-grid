@@ -139,6 +139,13 @@ include '../documentation-main/documentation_header.php';
                 See <a href="../javascript-grid-data-update/#big-data-small-transactions">Big Data Small Transactions</a>
             </td>
         </tr>
+        <tr>
+            <th>excludeChildrenWhenTreeDataFiltering</th>
+            <td>
+                Set to true to override the default tree data filtering behaviour to instead exclude child nodes from
+                filter results. See <a href="../javascript-grid-tree-data/#tree-data-filtering">Tree Data Filtering</a>.
+            </td>
+        </tr>
         </table>
     <h2>Selection</h2>
 
@@ -226,6 +233,11 @@ include '../documentation-main/documentation_header.php';
         <tr>
             <th>enableCellChangeFlash</th>
             <td>Set to true to have cells flash after data changes.
+                See <a href="../javascript-grid-data-update/#flashing">Flashing Data Changes</a>.</td>
+        </tr>
+        <tr>
+            <th>allowShowChangeAfterFilter</th>
+            <td>Set to true to have cells flash after data changes even when the change is due to filtering.
                 See <a href="../javascript-grid-data-update/#flashing">Flashing Data Changes</a>.</td>
         </tr>
         <tr>
@@ -374,8 +386,16 @@ include '../documentation-main/documentation_header.php';
         <tr>
             <th style="text-decoration: line-through">suppressRowVirtualisation</th>
             <td>There is no property suppressRowVirtualisation - if you want to do this, then set the rowBuffer
-            property to be very large, eg 9999. But be careful, lots of rendered ros will mean a very large amount
+            property to be very large, eg 9999. But be careful, lots of rendered rows will mean a very large amount
             of rendering in the DOM which will slow things down.</td>
+        </tr>
+        <tr>
+            <th>suppressMaxRenderedRowRestriction</th>
+            <td>By default the grid has limit of rendering a maximum of 500 rows at once (remember the grid only 
+            renders rows you can see, so unless your display shows more than 500 rows without vertically scrolling 
+            this will never be an issue).<br>
+            <strong>This is only relevant if you are manually setting rowBuffer to a high value (rendering more rows 
+            than can be seen) or if your grid height is able to display more than 500 rows at once</strong></td>
         </tr>
         <tr>
             <th>suppressScrollOnNewData</th>
@@ -494,6 +514,18 @@ include '../documentation-main/documentation_header.php';
             <td>Set to true to enable <a href="../javascript-grid-animation/#row-animations">Row Animation</a>.</td>
         </tr>
         <tr>
+            <th>cellStyle</th>
+            <td>The style to give a particular cell. See <a href="../javascript-grid-cell-styles/#cell-style">Cell Style</a>.</td>
+        </tr>
+        <tr>
+            <th>cellClass</th>
+            <td>The class to give a particular cell. See <a href="../javascript-grid-cell-styles/#cell-class">Cell Class</a>.</td>
+        </tr>
+        <tr>
+            <th>cellClassRules</th>
+            <td>Rules which can be applied to include certain CSS classes. See <a href="../javascript-grid-cell-styles/#cell-class-rules">Cell Class Rules</a>.</td>
+        </tr>
+        <tr>
             <th>rowStyle</th>
             <td>The style to give a particular row. See <a href="../javascript-grid-row-styles/#row-style">Row Style</a>.</td>
         </tr>
@@ -575,6 +607,20 @@ include '../documentation-main/documentation_header.php';
         </tr>
 
         </table>
+
+
+<h2>Charts</h2>
+<table class="table content reference">
+
+    <tr>
+        <th>enableCharts</th>
+        <td>Set to true to  <a href="../javascript-grid-charts-overview/#enabling-charts">Enable Charts</a>.</td>
+    </tr>
+
+</table>
+
+
+
 <h2>Miscellaneous</h2>
     <table class="table content reference">
         <tr>

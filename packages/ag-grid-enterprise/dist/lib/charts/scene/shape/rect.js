@@ -1,4 +1,4 @@
-// ag-grid-enterprise v20.1.0
+// ag-grid-enterprise v21.0.1
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
@@ -22,19 +22,20 @@ var Rect = /** @class */ (function (_super) {
     function Rect() {
         var _this = _super !== null && _super.apply(this, arguments) || this;
         _this.path = new path2D_1.Path2D();
-        _this._isDirtyPath = true;
+        _this._dirtyPath = true;
         _this._x = 0;
         _this._y = 0;
         _this._width = 10;
         _this._height = 10;
         _this._radius = 0;
+        /**
+         * If `true`, the rect is aligned to the pixel grid for crisp looking lines.
+         * Animated rects may not look nice with this option enabled, for example
+         * when a rect is translated by a sub-pixel value on each frame.
+         */
+        _this._crisp = false;
         _this.getBBox = function () {
-            return {
-                x: _this.x,
-                y: _this.y,
-                width: _this.width,
-                height: _this.height
-            };
+            return new bbox_1.BBox(_this.x, _this.y, _this.width, _this.height);
         };
         return _this;
     }
@@ -48,15 +49,15 @@ var Rect = /** @class */ (function (_super) {
         rect.radius = radius;
         return rect;
     };
-    Object.defineProperty(Rect.prototype, "isDirtyPath", {
+    Object.defineProperty(Rect.prototype, "dirtyPath", {
         get: function () {
-            return this._isDirtyPath;
+            return this._dirtyPath;
         },
         set: function (value) {
-            if (this._isDirtyPath !== value) {
-                this._isDirtyPath = value;
+            if (this._dirtyPath !== value) {
+                this._dirtyPath = value;
                 if (value) {
-                    this.isDirty = true;
+                    this.dirty = true;
                 }
             }
         },
@@ -70,7 +71,7 @@ var Rect = /** @class */ (function (_super) {
         set: function (value) {
             if (this._x !== value) {
                 this._x = value;
-                this.isDirtyPath = true;
+                this.dirtyPath = true;
             }
         },
         enumerable: true,
@@ -83,7 +84,7 @@ var Rect = /** @class */ (function (_super) {
         set: function (value) {
             if (this._y !== value) {
                 this._y = value;
-                this.isDirtyPath = true;
+                this.dirtyPath = true;
             }
         },
         enumerable: true,
@@ -96,7 +97,7 @@ var Rect = /** @class */ (function (_super) {
         set: function (value) {
             if (this._width !== value) {
                 this._width = value;
-                this.isDirtyPath = true;
+                this.dirtyPath = true;
             }
         },
         enumerable: true,
@@ -109,7 +110,7 @@ var Rect = /** @class */ (function (_super) {
         set: function (value) {
             if (this._height !== value) {
                 this._height = value;
-                this.isDirtyPath = true;
+                this.dirtyPath = true;
             }
         },
         enumerable: true,
@@ -122,52 +123,90 @@ var Rect = /** @class */ (function (_super) {
         set: function (value) {
             if (this._radius !== value) {
                 this._radius = value;
-                this.isDirtyPath = true;
+                this.dirtyPath = true;
+            }
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Rect.prototype, "crisp", {
+        get: function () {
+            return this._crisp;
+        },
+        set: function (value) {
+            if (this._crisp !== value) {
+                this._crisp = value;
+                this.dirtyPath = true;
+            }
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Rect.prototype, "strokeWidth", {
+        get: function () {
+            return this._strokeWidth;
+        },
+        set: function (value) {
+            if (this._strokeWidth !== value) {
+                this._strokeWidth = value;
+                // Normally, when the `lineWidth` changes, we only need to repaint the rect
+                // without updating the path. If the `isCrisp` is set to `true` however,
+                // we need to update the path to make sure the new stroke aligns to
+                // the pixel grid. This is the reason we override the `lineWidth` setter
+                // and getter here.
+                if (this.crisp) {
+                    this.dirtyPath = true;
+                }
+                else {
+                    this.dirty = true;
+                }
             }
         },
         enumerable: true,
         configurable: true
     });
     Rect.prototype.updatePath = function () {
-        if (!this.isDirtyPath)
+        if (!this.dirtyPath) {
             return;
+        }
         var path = this.path;
         var radius = this.radius;
         path.clear();
         if (!radius) {
-            path.rect(this.x, this.y, this.width, this.height);
+            if (this.crisp) {
+                var alignment = Math.floor(this.strokeWidth) % 2 / 2;
+                path.rect(Math.floor(this.x) + alignment, Math.floor(this.y) + alignment, Math.floor(this.width) + Math.floor(this.x % 1 + this.width % 1), Math.floor(this.height) + Math.floor(this.y % 1 + this.height % 1));
+            }
+            else {
+                path.rect(this.x, this.y, this.width, this.height);
+            }
         }
         else {
             // TODO: rect radius, this will require implementing
             //       another `arcTo` method in the `Path2D` class.
             throw "TODO";
         }
-        this.isDirtyPath = false;
+        this.dirtyPath = false;
     };
     Rect.prototype.isPointInPath = function (x, y) {
         var point = this.transformPoint(x, y);
         var bbox = this.getBBox();
-        return bbox_1.isPointInBBox(bbox, point.x, point.y);
+        return bbox.containsPoint(point.x, point.y);
     };
     Rect.prototype.isPointInStroke = function (x, y) {
         return false;
     };
     Rect.prototype.render = function (ctx) {
-        if (this.isDirtyTransform) {
+        if (this.dirtyTransform) {
             this.computeTransformMatrix();
         }
         this.matrix.toContext(ctx);
-        this.applyContextAttributes(ctx);
         this.updatePath();
         this.scene.appendPath(this.path);
-        if (this.fillStyle) {
-            ctx.fill();
-        }
-        if (this.strokeStyle) {
-            ctx.stroke();
-        }
-        this.isDirty = false;
+        this.fillStroke(ctx);
+        this.dirty = false;
     };
+    Rect.className = 'Rect';
     return Rect;
 }(shape_1.Shape));
 exports.Rect = Rect;

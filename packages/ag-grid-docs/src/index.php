@@ -43,7 +43,7 @@ meta_and_links($title, $keywords, $description, false);
 
                 <ul id="homepage-highlights">
                     <li>
-                        Over <strong>1,500</strong> Companies
+                        Over <strong>2,500</strong> Companies
                         use ag-Grid Enterprise.
                     </li>
 
@@ -53,13 +53,12 @@ meta_and_links($title, $keywords, $description, false);
                     </li>
 
                     <li>
-                        Over <strong>200,000</strong>
+                        Over <strong>500,000</strong>
                         Downloads per month.
                     </li>
                 </ul>
 
-                <a href="/javascript-grid-getting-started/" id="free-cta">Use Free Version</a>
-                <a href="/start-trial.php" id="enterprise-cta">Trial Enterprise Version</a>
+                <a href="/javascript-grid-getting-started/" id="free-cta">Get Started</a>
             </div>
         </section>
     </header>
@@ -67,7 +66,7 @@ meta_and_links($title, $keywords, $description, false);
     <div id="stage-frameworks">
         <section id="news-flash">
             <div>
-                22nd Feb 2019: <a href="./ag-grid-changelog/?fixVersion=20.1.0">Version 20.1.0</a> Tooltip Components, Custom Filters Options, Loading Components and bug fixes
+                4th Jun 2019: <a href="./ag-grid-changelog/?fixVersion=21.0.0">Version 21.0.0</a> Integrated Charts, Filtering Improvements, Icon Customisation and Better Scroll Performance with bug fixes ...
             </div>
         </section>
 
@@ -154,7 +153,23 @@ meta_and_links($title, $keywords, $description, false);
                 </div>
             </div>
         </section>
-</div>
+    </div>
+
+    <div class="stage-scenarios">
+        <h2 class="heading-scenarios">Integrated Charting</h2>
+
+        <section>
+            <div class="demo" id="demo-2" data-load="home/demo-3.php">
+                <div class="loading">
+                    <img src="_assets/doodles/checkbox-selection.svg">
+                    <p>Loading Demo...</p>
+                </div>
+                <div class="view-code">
+                    &nbsp;
+                </div>
+            </div>
+        </section>
+    </div>
 
     <div id="stage-testimonials">
         <section>

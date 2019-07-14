@@ -3,7 +3,7 @@ $pageTitle = "React Data Grid Component | Packed with features and performance
 .";
 $pageDescription = "Fastest, most feature-rich React Data Grid component from ag-Grid. Integrate seamlessly with React to deliver 63+ core and enterprise features including filtering, grouping and pagination. React Grid examples and demo on this page. Built to deal with large data sets, ease of integration, heavily customizable and a developer friendly API.
 ";
-$pageGroup = "basics";
+
 include '../landing-pages/convert-header.php';
 ?>
 <style><?php include './styles.css'; ?></style>
@@ -17,11 +17,12 @@ include '../landing-pages/convert-header.php';
         </a>
     </div>
     <h1>World's Leading React Data Grid Component</h1>
-    <p class="lead-description" id="react-data-grid-overview">ag-Grid is designed to integrate deeply into React.<br>
-        Use our grid as a React component to quickly add a react grid table to your application.<br>
-        Discover the versions9 key benefits and resources available to quickly add a data grid or React datatable to your React application.
-    </p>
     <div class="container">
+            <h2 class="overview">Overview</h2>
+    <p class="lead-description">
+        ag-Grid is designed to integrate deeply into React.<br>
+        Use our grid as a React component to quickly add a react grid table to your application.<br>
+        Discover key benefits and resources available to quickly add a data grid or React datatable to your React application.</p>
         <div class="container">
   <div class="row">
     <div class="col">
@@ -40,7 +41,7 @@ include '../landing-pages/convert-header.php';
                     <li><a class="jump-to" href="#Customization">&#10003; Ease of Integration/Customization</a></li>
                 </ul>
                 <br>
-                <a href="https://www.ag-grid.com/start-trial.php" target="_blank"><button type="button" class="btn btn-primary">Start Free Trial</button></a>
+                <a href="https://www.ag-grid.com/react-getting-started/" target="_blank"><button type="button" class="btn btn-primary">Get Started</button></a>
     </div>
 </div>
 </div>
@@ -220,7 +221,7 @@ include '../landing-pages/convert-header.php';
         </div>
         <div class="col">
             <hr>
-            <a href="https://www.ag-grid.com/start-trial.php" target="_blank"><button type="button" class="btn btn-primary">Start Free Trial</button></a>
+            <a href="https://www.ag-grid.com/react-getting-started/" target="_blank"><button type="button" class="btn btn-primary">Get Started</button></a>
             <hr>
         </div>
     </div>
@@ -268,7 +269,7 @@ include '../landing-pages/convert-header.php';
 </div>
 <div class="col">
     <hr>
-    <a href="https://www.ag-grid.com/start-trial.php" target="_blank"><button type="button" class="btn btn-primary">Start Free Trial</button></a>
+    <a href="https://www.ag-grid.com/react-getting-started/" target="_blank"><button type="button" class="btn btn-primary">Get Started</button></a>
     <hr>
 </div>
 </div>
@@ -323,7 +324,7 @@ Waste no time in integrating ag-Grid React into your Web Application.</p>
 </div>
 <div class="col">
 <hr>
-<a href="https://www.ag-grid.com/start-trial.php" target="_blank"><button type="button" class="btn btn-primary">Start Free Trial</button></a>
+<a href="https://www.ag-grid.com/react-getting-started/" target="_blank"><button type="button" class="btn btn-primary">Get Started</button></a>
 <hr>
 </div>
 </div>
@@ -371,12 +372,12 @@ You can easily extend the default functionality by creating your custom React co
 <div class="row">
 <div class="col">
     <hr>
-    <a href="https://medium.com/ag-grid/learn-to-customize-react-grid-in-less-than-10-minutes-2ce6845646bb" target="_blank"><button type="button" class="btn btn-primary">Customize React Grid Blog</button></a>
+    <a href="https://blog.ag-grid.com/learn-to-customize-react-grid-in-less-than-10-minutes/" target="_blank"><button type="button" class="btn btn-primary">Customize React Grid Blog</button></a>
     <hr>
 </div>
 <div class="col">
     <hr>
-    <a href="https://www.ag-grid.com/start-trial.php" target="_blank"><button type="button" class="btn btn-primary">Start Free Trial</button></a>
+    <a href="https://www.ag-grid.com/react-getting-started/" target="_blank"><button type="button" class="btn btn-primary">Get Started</button></a>
     <hr>
 </div>
 </div>
@@ -433,7 +434,7 @@ React Responsive Grid Layout
         </div>
         <div class="col">
             <hr>
-            <a href="https://www.ag-grid.com/start-trial.php" target="_blank"><button type="button" class="btn btn-primary">Start Free Trial</button></a>
+            <a href="https://www.ag-grid.com/react-getting-started/" target="_blank"><button type="button" class="btn btn-primary">Get Started</button></a>
             <hr>
         </div>
     </div>
@@ -522,12 +523,12 @@ React Responsive Grid Layout
             </p>
         </div>
             <div class="col">
-                <a href="https://medium.com/ag-grid/get-started-with-react-grid-in-5-minutes-f6e5fb16afa"><p class="lead-description">
-                    Get Started with React Grid[Blog]
+                <a href="https://blog.ag-grid.com/tag/react/"><p class="lead-description">
+                    ag-Grid React[Blog]
                 </p></a>
                 <img class="icons" alt="ag-grid-react-blog" src="/images/icons/blog.svg">
                 <p class="lead-description">
-                    This article describes the React grid example and shows you how easy it is to integrate and configure it. It’s a 5 minute getting started guide with examples that you can copy/paste and hit the ground running.
+                    Browse all our React and React Grid related blogs, ranging from depthful content to guides and tutorials surrounding ag-Grid React and general React content.
                 </p>
             </div>
         </div>
@@ -556,7 +557,7 @@ React Responsive Grid Layout
 <p class="lead-description">
     <strong>Join the <strong>millions of developers</strong> and <strong>thousands of companies</strong> who use ag-Grid.<br> Ready to give it a try?</strong>
 </p>
-<a href="https://www.ag-grid.com/start-trial.php" target="_blank"><button type="button" class="btn btn-primary btn-lg btn-block">Start Free Trial</button></a>
+<a href="https://www.ag-grid.com/react-getting-started/" target="_blank"><button type="button" class="btn btn-primary btn-lg btn-block">Get Started</button></a>
 </p>
 </div>
 </div>

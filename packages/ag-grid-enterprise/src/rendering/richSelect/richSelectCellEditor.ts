@@ -1,16 +1,17 @@
 import {
-    ICellEditor,
-    Component,
-    PopupComponent,
+    _,
     Autowired,
-    Context,
-    Utils,
+    Component,
     Constants,
+    ICellEditor,
     ICellRendererComp,
-    CellRendererService,
+    ICellRendererParams,
     IRichCellEditorParams,
+    PopupComponent,
     Promise,
-    _
+    UserComponentFactory,
+    Utils,
+    GridOptionsWrapper
 } from "ag-grid-community";
 import { RichSelectRow } from "./richSelectRow";
 import { VirtualList } from "../virtualList";
@@ -20,12 +21,14 @@ export class RichSelectCellEditor extends PopupComponent implements ICellEditor 
     // tab index is needed so we can focus, which is needed for keyboard events
     private static TEMPLATE =
         `<div class="ag-rich-select" tabindex="0">
-            <div ref="eValue" class="ag-rich-select-value"></div>
+            <div ref="eValue" class="ag-rich-select-value">
+                <div class="ag-icon ag-icon-small-down"></div>
+            </div>
             <div ref="eList" class="ag-rich-select-list"></div>
         </div>`;
 
-    @Autowired('context') context: Context;
-    @Autowired('cellRendererService') cellRendererService: CellRendererService;
+    @Autowired('userComponentFactory') private userComponentFactory: UserComponentFactory;
+    @Autowired('gridOptionsWrapper') private gridOptionsWrapper: GridOptionsWrapper;
 
     private params: IRichCellEditorParams;
     private virtualList: VirtualList;
@@ -55,7 +58,7 @@ export class RichSelectCellEditor extends PopupComponent implements ICellEditor 
         this.focusAfterAttached = params.cellStartedEdit;
 
         this.virtualList = new VirtualList();
-        this.context.wireBean(this.virtualList);
+        this.getContext().wireBean(this.virtualList);
 
         this.virtualList.setComponentCreator(this.createRowComponent.bind(this));
 
@@ -120,11 +123,20 @@ export class RichSelectCellEditor extends PopupComponent implements ICellEditor 
         const valueFormatted = this.params.formatValue(this.selectedValue);
         const eValue = this.getRefElement('eValue') as HTMLElement;
 
-        const promise:Promise<ICellRendererComp> = this.cellRendererService.useRichSelectCellRenderer(this.params, eValue, {value: this.selectedValue, valueFormatted: valueFormatted});
+        const params = {
+            value: this.selectedValue,
+            valueFormatted: valueFormatted,
+            api: this.gridOptionsWrapper.getApi()
+        } as ICellRendererParams;
 
-        const foundRenderer = _.exists(promise);
+        const promise: Promise<ICellRendererComp> = this.userComponentFactory.newCellRenderer(this.params, params);
+        if (promise != null) {
+            _.bindCellRendererToHtmlElement(promise, eValue);
+        } else {
+            eValue.innerText = params.valueFormatted != null ? params.valueFormatted : params.value;
+        }
 
-        if (foundRenderer) {
+        if (promise) {
             promise.then(renderer => {
                 if (renderer && renderer.destroy) {
                     this.addDestroyFunc(() => renderer.destroy());
@@ -156,7 +168,7 @@ export class RichSelectCellEditor extends PopupComponent implements ICellEditor 
     private createRowComponent(value: any): Component {
         const valueFormatted = this.params.formatValue(value);
         const row = new RichSelectRow(this.params);
-        this.context.wireBean(row);
+        this.getContext().wireBean(row);
         row.setState(value, valueFormatted, value === this.selectedValue);
         return row;
     }

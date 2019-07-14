@@ -1,4 +1,4 @@
-// Type definitions for ag-grid-community v20.1.0
+// Type definitions for ag-grid-community v21.0.1
 // Project: http://www.ag-grid.com/
 // Definitions by: Niall Crosby <https://github.com/ag-grid/>
 import { GridPanel } from "../gridPanel/gridPanel";
@@ -7,22 +7,20 @@ import { RowNode } from "../entities/rowNode";
 import { CellComp } from "./cellComp";
 import { GridCore } from "../gridCore";
 import { LoggerFactory } from "../logger";
-import { GridCell, GridCellDef } from "../entities/gridCell";
+import { CellPosition } from "../entities/cellPosition";
 import { BeanStub } from "../context/beanStub";
 import { FlashCellsParams, GetCellRendererInstancesParams, RefreshCellsParams } from "../gridApi";
 import { ICellRendererComp } from "./cellRenderers/iCellRenderer";
 import { ICellEditorComp } from "../interfaces/iCellEditor";
+import { RowPosition } from "../entities/rowPosition";
 export declare class RowRenderer extends BeanStub {
     private paginationProxy;
     private columnController;
     private gridOptionsWrapper;
     private $scope;
-    private expressionService;
-    private templateService;
-    private valueService;
     private eventService;
     private pinnedRowModel;
-    private context;
+    private rowModel;
     private loggerFactory;
     private focusedCellController;
     private cellNavigationService;
@@ -33,6 +31,7 @@ export declare class RowRenderer extends BeanStub {
     private animationFrameService;
     private rangeController;
     private gridPanel;
+    private destroyFuncsForColumnListeners;
     private firstRenderedRow;
     private lastRenderedRow;
     private rowCompsByIndex;
@@ -47,8 +46,12 @@ export declare class RowRenderer extends BeanStub {
     private embedFullWidthRows;
     private gridCore;
     registerGridCore(gridCore: GridCore): void;
+    getGridCore(): GridCore;
     agWire(loggerFactory: LoggerFactory): void;
     registerGridComp(gridPanel: GridPanel): void;
+    private registerCellEventListeners;
+    private removeGridColumnListeners;
+    private refreshListenersToColumnsForCellComps;
     private onDomLayoutChanged;
     datasourceChanged(): void;
     private onPageLoaded;
@@ -74,7 +77,7 @@ export declare class RowRenderer extends BeanStub {
     refreshCells(params?: RefreshCellsParams): void;
     getCellRendererInstances(params: GetCellRendererInstancesParams): ICellRendererComp[];
     getCellEditorInstances(params: GetCellRendererInstancesParams): ICellEditorComp[];
-    getEditingCells(): GridCellDef[];
+    getEditingCells(): CellPosition[];
     private forEachCellCompFiltered;
     destroy(): void;
     private binRowComps;
@@ -94,13 +97,15 @@ export declare class RowRenderer extends BeanStub {
     private ensureAllRowsInRangeHaveHeightsCalculated;
     getFirstVirtualRenderedRow(): number;
     getLastVirtualRenderedRow(): number;
-    private keepRowBecauseEditing;
+    private keepRowBecauseEditingOrFocused;
     private createRowComp;
     getRenderedNodes(): RowNode[];
-    navigateToNextCell(event: KeyboardEvent | null, key: number, previousCell: GridCell, allowUserOverride: boolean): void;
-    ensureCellVisible(gridCell: GridCell): void;
-    startEditingCell(gridCell: GridCell, keyPress: number, charPress: string): void;
-    private getComponentForCell;
+    navigateToNextCell(event: KeyboardEvent | null, key: number, currentCell: CellPosition, allowUserOverride: boolean): void;
+    private getLastCellOfColSpan;
+    ensureCellVisible(gridCell: CellPosition): void;
+    startEditingCell(gridCell: CellPosition, keyPress: number, charPress: string): void;
+    getComponentForCell(cellPosition: CellPosition): CellComp;
+    getRowNode(gridRow: RowPosition): RowNode | null;
     onTabKeyDown(previousRenderedCell: CellComp, keyboardEvent: KeyboardEvent): void;
     tabToNextCell(backwards: boolean): boolean;
     private moveToCellAfter;

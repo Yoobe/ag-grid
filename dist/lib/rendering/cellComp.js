@@ -1,6 +1,6 @@
 /**
  * ag-grid-community - Advanced Data Grid / Data Table supporting Javascript / React / AngularJS / Web Components
- * @version v20.1.0
+ * @version v21.0.1
  * @link http://www.ag-grid.com/
  * @license MIT
  */
@@ -31,13 +31,15 @@ var __assign = (this && this.__assign) || function () {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var column_1 = require("../entities/column");
-var rowNode_1 = require("../entities/rowNode");
 var constants_1 = require("../constants");
 var events_1 = require("../events");
-var gridCell_1 = require("../entities/gridCell");
 var component_1 = require("../widgets/component");
 var checkboxSelectionComponent_1 = require("./checkboxSelectionComponent");
+var cellPosition_1 = require("../entities/cellPosition");
+var iRangeController_1 = require("../interfaces/iRangeController");
 var rowDragComp_1 = require("./rowDragComp");
+var popupEditorWrapper_1 = require("./cellEditors/popupEditorWrapper");
+var rowPosition_1 = require("../entities/rowPosition");
 var utils_1 = require("../utils");
 var CellComp = /** @class */ (function (_super) {
     __extends(CellComp, _super);
@@ -62,12 +64,16 @@ var CellComp = /** @class */ (function (_super) {
         _this.autoHeightCell = autoHeightCell;
         _this.printLayout = printLayout;
         _this.createGridCellVo();
-        _this.rangeSelectionEnabled = beans.enterprise && beans.gridOptionsWrapper.isEnableRangeSelection();
-        _this.cellFocused = _this.beans.focusedCellController.isCellFocused(_this.gridCell);
+        _this.rangeSelectionEnabled = beans.gridOptionsWrapper.isEnableRangeSelection();
+        _this.cellFocused = _this.beans.focusedCellController.isCellFocused(_this.cellPosition);
         _this.firstRightPinned = _this.column.isFirstRightPinned();
         _this.lastLeftPinned = _this.column.isLastLeftPinned();
         if (_this.rangeSelectionEnabled) {
-            _this.rangeCount = _this.beans.rangeController.getCellRangeCount(_this.gridCell);
+            var rangeController = _this.beans.rangeController;
+            _this.rangeCount = rangeController.getCellRangeCount(_this.cellPosition);
+            if (_this.rangeCount) {
+                _this.hasChartRange = rangeController.getCellRanges().every(function (range) { return utils_1._.exists(range.type); });
+            }
         }
         _this.getValueAndFormat();
         _this.setUsingWrapper();
@@ -93,8 +99,8 @@ var CellComp = /** @class */ (function (_super) {
         var cssClasses = this.getInitialCssClasses();
         var stylesForRowSpanning = this.getStylesForRowSpanning();
         if (this.usingWrapper) {
-            wrapperStartTemplate = "<span ref=\"eCellWrapper\" class=\"ag-cell-wrapper\"><span ref=\"eCellValue\" class=\"ag-cell-value\" " + unselectable + ">";
-            wrapperEndTemplate = '</span></span>';
+            wrapperStartTemplate = "<div ref=\"eCellWrapper\" class=\"ag-cell-wrapper\"><span ref=\"eCellValue\" class=\"ag-cell-value\" " + unselectable + ">";
+            wrapperEndTemplate = '</span></div>';
         }
         templateParts.push("<div");
         templateParts.push(" tabindex=\"-1\"");
@@ -130,31 +136,16 @@ var CellComp = /** @class */ (function (_super) {
         // all of these have dependencies on the eGui, so only do them after eGui is set
         this.addDomData();
         this.populateTemplate();
-        this.attachCellRenderer();
+        this.createCellRendererInstance(true);
         this.angular1Compile();
-        this.addDestroyableEventListener(this.beans.eventService, events_1.Events.EVENT_CELL_FOCUSED, this.onCellFocused.bind(this));
-        this.addDestroyableEventListener(this.beans.eventService, events_1.Events.EVENT_FLASH_CELLS, this.onFlashCells.bind(this));
-        this.addDestroyableEventListener(this.beans.eventService, events_1.Events.EVENT_COLUMN_HOVER_CHANGED, this.onColumnHover.bind(this));
-        this.addDestroyableEventListener(this.rowNode, rowNode_1.RowNode.EVENT_ROW_INDEX_CHANGED, this.onRowIndexChanged.bind(this));
-        this.addDestroyableEventListener(this.rowNode, rowNode_1.RowNode.EVENT_CELL_CHANGED, this.onCellChanged.bind(this));
-        this.addDestroyableEventListener(this.column, column_1.Column.EVENT_LEFT_CHANGED, this.onLeftChanged.bind(this));
-        this.addDestroyableEventListener(this.column, column_1.Column.EVENT_WIDTH_CHANGED, this.onWidthChanged.bind(this));
-        this.addDestroyableEventListener(this.column, column_1.Column.EVENT_FIRST_RIGHT_PINNED_CHANGED, this.onFirstRightPinnedChanged.bind(this));
-        this.addDestroyableEventListener(this.column, column_1.Column.EVENT_LAST_LEFT_PINNED_CHANGED, this.onLastLeftPinnedChanged.bind(this));
-        // only for printLayout - because we are rendering all the cells in the same row, regardless of pinned state,
-        // then changing the width of the containers will impact left position. eg the center cols all have their
-        // left position adjusted by the width of the left pinned column, so if the pinned left column width changes,
-        // all the center cols need to be shifted to accommodate this. when in normal layout, the pinned cols are
-        // in different containers so doesn't impact.
-        if (this.printLayout) {
-            this.addDestroyableEventListener(this.beans.eventService, events_1.Events.EVENT_DISPLAYED_COLUMNS_WIDTH_CHANGED, this.onLeftChanged.bind(this));
-        }
         // if not doing enterprise, then range selection service would be missing
         // so need to check before trying to use it
         if (this.rangeSelectionEnabled) {
-            this.addDestroyableEventListener(this.beans.eventService, events_1.Events.EVENT_RANGE_SELECTION_CHANGED, this.onRangeSelectionChanged.bind(this));
+            if (this.shouldHaveSelectionHandle()) {
+                this.addSelectionHandle();
+            }
         }
-        if (this.tooltip && !this.beans.gridOptionsWrapper.isEnableBrowserTooltips()) {
+        if (utils_1._.exists(this.tooltip) && !this.beans.gridOptionsWrapper.isEnableBrowserTooltips()) {
             this.beans.tooltipManager.registerTooltip(this);
         }
     };
@@ -171,7 +162,7 @@ var CellComp = /** @class */ (function (_super) {
     CellComp.prototype.getCellLeft = function () {
         var mostLeftCol;
         if (this.beans.gridOptionsWrapper.isEnableRtl() && this.colsSpanning) {
-            mostLeftCol = this.colsSpanning[this.colsSpanning.length - 1];
+            mostLeftCol = utils_1._.last(this.colsSpanning);
         }
         else {
             mostLeftCol = this.column;
@@ -187,7 +178,7 @@ var CellComp = /** @class */ (function (_super) {
         return result;
     };
     CellComp.prototype.onFlashCells = function (event) {
-        var cellId = this.gridCell.createId();
+        var cellId = cellPosition_1.CellPositionUtils.createId(this.cellPosition);
         var shouldFlash = event.cells[cellId];
         if (shouldFlash) {
             this.animateCell('highlight');
@@ -247,13 +238,9 @@ var CellComp = /** @class */ (function (_super) {
             cssClasses.push('ag-cell-with-height');
         }
         var doingFocusCss = !this.beans.gridOptionsWrapper.isSuppressCellSelection();
-        if (doingFocusCss) {
+        if (doingFocusCss && this.cellFocused) {
             // otherwise the class depends on the focus state
-            cssClasses.push(this.cellFocused ? 'ag-cell-focus' : 'ag-cell-no-focus');
-        }
-        else {
-            // if we are not doing cell selection, then ag-cell-no-focus gets put onto every cell
-            cssClasses.push('ag-cell-no-focus');
+            cssClasses.push('ag-cell-focus');
         }
         if (this.firstRightPinned) {
             cssClasses.push('ag-cell-first-right-pinned');
@@ -266,7 +253,7 @@ var CellComp = /** @class */ (function (_super) {
         }
         utils_1._.pushAll(cssClasses, this.preProcessClassesFromColDef());
         utils_1._.pushAll(cssClasses, this.preProcessCellClassRules());
-        utils_1._.pushAll(cssClasses, this.getRangeClasses());
+        utils_1._.pushAll(cssClasses, this.getInitialRangeClasses());
         // if using the wrapper, this class goes on the wrapper instead
         if (!this.usingWrapper) {
             cssClasses.push('ag-cell-value');
@@ -353,7 +340,10 @@ var CellComp = /** @class */ (function (_super) {
             if (!cellRendererRefreshed) {
                 this.replaceContentsAfterRefresh();
             }
-            var flashCell = !suppressFlash &&
+            // we don't want to flash the cells when processing a filter change, as otherwise the UI would
+            // be to busy. see comment in FilterManager with regards processingFilterChange
+            var processingFilterChange = this.beans.filterManager.isSuppressFlashingCellsBecauseFiltering();
+            var flashCell = !suppressFlash && !processingFilterChange &&
                 (this.beans.gridOptionsWrapper.isEnableCellChangeFlash() || colDef.enableCellChangeFlash);
             if (flashCell) {
                 this.flashCell();
@@ -402,7 +392,7 @@ var CellComp = /** @class */ (function (_super) {
         this.cellRendererGui = null;
         // populate
         this.putDataIntoCellAfterRefresh();
-        this.angular1Compile();
+        this.updateAngular1ScopeAndCompile();
     };
     CellComp.prototype.updateAngular1ScopeAndCompile = function () {
         if (this.beans.gridOptionsWrapper.isAngularCompileRows() && this.scope) {
@@ -414,10 +404,14 @@ var CellComp = /** @class */ (function (_super) {
         // if angular compiling, then need to also compile the cell again (angular compiling sucks, please wait...)
         if (this.beans.gridOptionsWrapper.isAngularCompileRows()) {
             var eGui = this.getGui();
-            var compiledElement_1 = this.beans.$compile(eGui)(this.scope);
-            this.addDestroyFunc(function () {
-                compiledElement_1.remove();
-            });
+            // only compile the node if it hasn't already been done
+            // this prevents "orphaned" node leaks
+            if (!eGui.classList.contains('ng-scope') || eGui.childElementCount === 0) {
+                var compiledElement_1 = this.beans.$compile(eGui)(this.scope);
+                this.addDestroyFunc(function () {
+                    compiledElement_1.remove();
+                });
+            }
         }
     };
     CellComp.prototype.postProcessStylesFromColDef = function () {
@@ -473,6 +467,7 @@ var CellComp = /** @class */ (function (_super) {
             rowIndex: this.rowNode.rowIndex,
             $scope: this.scope,
             api: this.beans.gridOptionsWrapper.getApi(),
+            columnApi: this.beans.gridOptionsWrapper.getColumnApi(),
             context: this.beans.gridOptionsWrapper.getContext()
         }, onApplicableClass);
     };
@@ -496,12 +491,11 @@ var CellComp = /** @class */ (function (_super) {
         else {
             // we can switch from using a cell renderer back to the default if a user
             // is using cellRendererSelect
+            this.chooseCellRenderer();
             if (this.usingCellRenderer) {
-                if (!this.attachCellRenderer()) {
-                    this.usingCellRenderer = false;
-                }
+                this.createCellRendererInstance();
             }
-            if (!this.usingCellRenderer) {
+            else {
                 var valueToUse = this.getValueToUse();
                 if (valueToUse !== null && valueToUse !== undefined) {
                     this.eParentOfValue.innerHTML = utils_1._.escape(valueToUse);
@@ -516,7 +510,7 @@ var CellComp = /** @class */ (function (_super) {
         // if the cell renderer has a refresh method, we call this instead of doing a refresh
         var params = this.createCellRendererParams();
         // take any custom params off of the user
-        var finalParams = this.beans.componentResolver.mergeParams(this.getComponentHolder(), this.cellRendererType, params, params);
+        var finalParams = this.beans.userComponentFactory.createFinalParams(this.getComponentHolder(), this.cellRendererType, params);
         var result = this.cellRenderer.refresh(finalParams);
         // NOTE on undefined: previous version of the cellRenderer.refresh() interface
         // returned nothing, if the method existed, we assumed it refreshed. so for
@@ -558,16 +552,17 @@ var CellComp = /** @class */ (function (_super) {
         var valueGetter = colDef.tooltipValueGetter || colDef.tooltip;
         if (valueGetter) {
             return valueGetter({
-                value: this.value,
-                valueFormatted: this.valueFormatted,
-                data: this.rowNode.data,
-                node: this.rowNode,
-                colDef: colDef,
                 api: this.beans.gridOptionsWrapper.getApi(),
                 columnApi: this.beans.gridOptionsWrapper.getColumnApi(),
-                $scope: this.scope,
+                colDef: colDef,
+                column: this.getColumn(),
                 context: this.beans.gridOptionsWrapper.getContext(),
-                rowIndex: this.gridCell.rowIndex
+                value: this.value,
+                valueFormatted: this.valueFormatted,
+                rowIndex: this.cellPosition.rowIndex,
+                node: this.rowNode,
+                data: this.rowNode.data,
+                $scope: this.scope,
             });
         }
         return null;
@@ -583,8 +578,9 @@ var CellComp = /** @class */ (function (_super) {
             data: this.rowNode.data,
             node: this.rowNode,
             colDef: colDef,
-            rowIndex: this.gridCell.rowIndex,
+            rowIndex: this.cellPosition.rowIndex,
             api: this.beans.gridOptionsWrapper.getApi(),
+            columnApi: this.beans.gridOptionsWrapper.getColumnApi(),
             $scope: this.scope,
             context: this.beans.gridOptionsWrapper.getContext()
         }, onApplicableClass, onNotApplicableClass);
@@ -633,8 +629,8 @@ var CellComp = /** @class */ (function (_super) {
             return;
         }
         var params = this.createCellRendererParams();
-        var cellRenderer = this.beans.componentResolver.getComponentToUse(colDef, 'cellRenderer', params);
-        var pinnedRowCellRenderer = this.beans.componentResolver.getComponentToUse(colDef, 'pinnedRowCellRenderer', params);
+        var cellRenderer = this.beans.userComponentFactory.lookupComponentClassDef(colDef, 'cellRenderer', params);
+        var pinnedRowCellRenderer = this.beans.userComponentFactory.lookupComponentClassDef(colDef, 'pinnedRowCellRenderer', params);
         if (pinnedRowCellRenderer && this.rowNode.rowPinned) {
             this.cellRendererType = CellComp.CELL_RENDERER_TYPE_PINNED;
             this.usingCellRenderer = true;
@@ -647,18 +643,41 @@ var CellComp = /** @class */ (function (_super) {
             this.usingCellRenderer = false;
         }
     };
-    CellComp.prototype.createCellRendererInstance = function () {
+    CellComp.prototype.createCellRendererInstance = function (useTaskService) {
+        var _this = this;
+        if (useTaskService === void 0) { useTaskService = false; }
+        if (!this.usingCellRenderer) {
+            return;
+        }
+        // never use task service if angularCompileRows=true, as that assume the cell renderers
+        // are finished when the row is created.
+        if (this.beans.gridOptionsWrapper.isAngularCompileRows()) {
+            useTaskService = false;
+        }
         var params = this.createCellRendererParams();
         this.cellRendererVersion++;
         var callback = this.afterCellRendererCreated.bind(this, this.cellRendererVersion);
-        // this can return null in the event that the user has switched from a renderer component to nothing, for example
-        // when using a cellRendererSelect to return a component or null depending on row data etc
-        var componentPromise = this.beans.componentResolver.createAgGridComponent(this.getComponentHolder(), params, this.cellRendererType, params, undefined, false);
-        if (componentPromise) {
-            componentPromise.then(callback);
-            return true;
+        var cellRendererTypeNormal = this.cellRendererType === CellComp.CELL_RENDERER_TYPE_NORMAL;
+        var task = function () {
+            // this can return null in the event that the user has switched from a renderer component to nothing, for example
+            // when using a cellRendererSelect to return a component or null depending on row data etc
+            var componentPromise;
+            if (cellRendererTypeNormal) {
+                componentPromise = _this.beans.userComponentFactory.newCellRenderer(_this.getComponentHolder(), params);
+            }
+            else {
+                componentPromise = _this.beans.userComponentFactory.newPinnedRowCellRenderer(_this.getComponentHolder(), params);
+            }
+            if (componentPromise) {
+                componentPromise.then(callback);
+            }
+        };
+        if (useTaskService) {
+            this.beans.taskQueue.addP2Task(task);
         }
-        return false;
+        else {
+            task();
+        }
     };
     CellComp.prototype.afterCellRendererCreated = function (cellRendererVersion, cellRenderer) {
         // see if daemon
@@ -679,12 +698,6 @@ var CellComp = /** @class */ (function (_super) {
             this.eParentOfValue.appendChild(this.cellRendererGui);
         }
     };
-    CellComp.prototype.attachCellRenderer = function () {
-        if (!this.usingCellRenderer) {
-            return false;
-        }
-        return this.createCellRendererInstance();
-    };
     CellComp.prototype.createCellRendererParams = function () {
         var _this = this;
         var params = {
@@ -700,7 +713,7 @@ var CellComp = /** @class */ (function (_super) {
             colDef: this.getComponentHolder(),
             column: this.column,
             $scope: this.scope,
-            rowIndex: this.gridCell.rowIndex,
+            rowIndex: this.cellPosition.rowIndex,
             api: this.beans.gridOptionsWrapper.getApi(),
             columnApi: this.beans.gridOptionsWrapper.getColumnApi(),
             context: this.beans.gridOptionsWrapper.getContext(),
@@ -733,9 +746,6 @@ var CellComp = /** @class */ (function (_super) {
     };
     CellComp.prototype.getValueAndFormat = function () {
         this.value = this.getValue();
-        if (this.scope) {
-            this.scope.data.value = this.value;
-        }
         this.valueFormatted = this.beans.valueFormatterService.formatValue(this.column, this.rowNode, this.scope, this.value);
     };
     CellComp.prototype.getValue = function () {
@@ -861,7 +871,7 @@ var CellComp = /** @class */ (function (_super) {
         this.cellEditorVersion++;
         var callback = this.afterCellEditorCreated.bind(this, this.cellEditorVersion);
         var params = this.createCellEditorParams(keyPress, charPress, cellStartedEdit);
-        this.beans.cellEditorFactory.createCellEditor(this.getComponentHolder(), params).then(callback);
+        this.createCellEditor(params).then(callback);
         // if we don't do this, and editor component is async, then there will be a period
         // when the component isn't present and keyboard navigation won't work - so example
         // of user hitting tab quickly (more quickly than renderers getting created) won't work
@@ -869,6 +879,25 @@ var CellComp = /** @class */ (function (_super) {
         if (cellEditorAsync && cellStartedEdit) {
             this.focusCell(true);
         }
+    };
+    CellComp.prototype.createCellEditor = function (params) {
+        var _this = this;
+        var cellEditorPromise = this.beans.userComponentFactory.newCellEditor(this.column.getColDef(), params);
+        return cellEditorPromise.map(function (cellEditor) {
+            var isPopup = cellEditor.isPopup && cellEditor.isPopup();
+            if (!isPopup) {
+                return cellEditor;
+            }
+            if (_this.beans.gridOptionsWrapper.isFullRowEdit()) {
+                console.warn('ag-Grid: popup cellEditor does not work with fullRowEdit - you cannot use them both ' +
+                    '- either turn off fullRowEdit, or stop using popup editors.');
+            }
+            // if a popup, then we wrap in a popup editor and return the popup
+            var popupEditorWrapper = new popupEditorWrapper_1.PopupEditorWrapper(cellEditor);
+            _this.beans.context.wireBean(popupEditorWrapper);
+            popupEditorWrapper.init(params);
+            return popupEditorWrapper;
+        });
     };
     CellComp.prototype.afterCellEditorCreated = function (cellEditorVersion, cellEditor) {
         // if editingCell=false, means user cancelled the editor before component was ready.
@@ -952,7 +981,7 @@ var CellComp = /** @class */ (function (_super) {
             // we only focus cell again if this cell is still focused. it is possible
             // it is not focused if the user cancelled the edit by clicking on another
             // cell outside of this one
-            if (this.beans.focusedCellController.isCellFocused(this.gridCell)) {
+            if (this.beans.focusedCellController.isCellFocused(this.cellPosition)) {
                 this.focusCell(true);
             }
         }
@@ -980,8 +1009,10 @@ var CellComp = /** @class */ (function (_super) {
             keyPress: keyPress,
             charPress: charPress,
             column: this.column,
-            rowIndex: this.gridCell.rowIndex,
+            colDef: this.column.getColDef(),
+            rowIndex: this.cellPosition.rowIndex,
             node: this.rowNode,
+            data: this.rowNode.data,
             api: this.beans.gridOptionsWrapper.getApi(),
             cellStartedEdit: cellStartedEdit,
             columnApi: this.beans.gridOptionsWrapper.getColumnApi(),
@@ -1023,7 +1054,7 @@ var CellComp = /** @class */ (function (_super) {
     };
     CellComp.prototype.focusCell = function (forceBrowserFocus) {
         if (forceBrowserFocus === void 0) { forceBrowserFocus = false; }
-        this.beans.focusedCellController.setFocusedCell(this.gridCell.rowIndex, this.column, this.rowNode.rowPinned, forceBrowserFocus);
+        this.beans.focusedCellController.setFocusedCell(this.cellPosition.rowIndex, this.column, this.rowNode.rowPinned, forceBrowserFocus);
     };
     CellComp.prototype.setFocusInOnEditor = function () {
         if (this.editingCell) {
@@ -1076,29 +1107,22 @@ var CellComp = /** @class */ (function (_super) {
     };
     CellComp.prototype.onNavigationKeyPressed = function (event, key) {
         if (this.editingCell) {
-            this.stopRowOrCellEdit();
+            return;
         }
         if (event.shiftKey && this.rangeSelectionEnabled) {
             this.onShiftRangeSelect(key);
         }
         else {
-            this.beans.rowRenderer.navigateToNextCell(event, key, this.gridCell, true);
+            this.beans.rowRenderer.navigateToNextCell(event, key, this.cellPosition, true);
         }
         // if we don't prevent default, the grid will scroll with the navigation keys
         event.preventDefault();
     };
     CellComp.prototype.onShiftRangeSelect = function (key) {
-        var success = this.beans.rangeController.extendRangeInDirection(this.gridCell, key);
-        if (!success) {
-            return;
+        var endCell = this.beans.rangeController.extendLatestRangeInDirection(key);
+        if (endCell) {
+            this.beans.rowRenderer.ensureCellVisible(endCell);
         }
-        var ranges = this.beans.rangeController.getCellRanges();
-        // this should never happen, as extendRangeFromCell should always have one range after getting called
-        if (utils_1._.missing(ranges) || !ranges || ranges.length !== 1) {
-            return;
-        }
-        var endCell = ranges[0].end;
-        this.beans.rowRenderer.ensureCellVisible(endCell);
     };
     CellComp.prototype.onTabKeyDown = function (event) {
         this.beans.rowRenderer.onTabKeyDown(this, event);
@@ -1114,7 +1138,7 @@ var CellComp = /** @class */ (function (_super) {
         }
         else {
             if (this.beans.gridOptionsWrapper.isEnterMovesDown()) {
-                this.beans.rowRenderer.navigateToNextCell(null, constants_1.Constants.KEY_DOWN, this.gridCell, false);
+                this.beans.rowRenderer.navigateToNextCell(null, constants_1.Constants.KEY_DOWN, this.cellPosition, false);
             }
             else {
                 this.startRowOrCellEdit(constants_1.Constants.KEY_ENTER);
@@ -1128,7 +1152,7 @@ var CellComp = /** @class */ (function (_super) {
         }
         var enterMovesDownAfterEdit = this.beans.gridOptionsWrapper.isEnterMovesDownAfterEdit();
         if (enterMovesDownAfterEdit) {
-            this.beans.rowRenderer.navigateToNextCell(null, constants_1.Constants.KEY_DOWN, this.gridCell, false);
+            this.beans.rowRenderer.navigateToNextCell(null, constants_1.Constants.KEY_DOWN, this.cellPosition, false);
         }
     };
     CellComp.prototype.onF2KeyDown = function () {
@@ -1147,24 +1171,22 @@ var CellComp = /** @class */ (function (_super) {
         // in which cse we should not be listening for these key pressed
         var eventTarget = utils_1._.getTarget(event);
         var eventOnChildComponent = eventTarget !== this.getGui();
-        if (eventOnChildComponent) {
+        if (eventOnChildComponent || this.editingCell) {
             return;
         }
-        if (!this.editingCell) {
-            var pressedChar = String.fromCharCode(event.charCode);
-            if (pressedChar === ' ') {
-                this.onSpaceKeyPressed(event);
-            }
-            else {
-                if (utils_1._.isEventFromPrintableCharacter(event)) {
-                    this.startRowOrCellEdit(null, pressedChar);
-                    // if we don't prevent default, then the keypress also gets applied to the text field
-                    // (at least when doing the default editor), but we need to allow the editor to decide
-                    // what it wants to do. we only do this IF editing was started - otherwise it messes
-                    // up when the use is not doing editing, but using rendering with text fields in cellRenderer
-                    // (as it would block the the user from typing into text fields).
-                    event.preventDefault();
-                }
+        var pressedChar = String.fromCharCode(event.charCode);
+        if (pressedChar === ' ') {
+            this.onSpaceKeyPressed(event);
+        }
+        else {
+            if (utils_1._.isEventFromPrintableCharacter(event)) {
+                this.startRowOrCellEdit(null, pressedChar);
+                // if we don't prevent default, then the keypress also gets applied to the text field
+                // (at least when doing the default editor), but we need to allow the editor to decide
+                // what it wants to do. we only do this IF editing was started - otherwise it messes
+                // up when the use is not doing editing, but using rendering with text fields in cellRenderer
+                // (as it would block the the user from typing into text fields).
+                event.preventDefault();
             }
         }
     };
@@ -1185,35 +1207,47 @@ var CellComp = /** @class */ (function (_super) {
         // the focus doesn't get to the text field, instead to goes to the div
         // behind, making it impossible to select the text field.
         var forceBrowserFocus = false;
-        // return if we are clicking on a row selection checkbox, otherwise the row will get selected AND
-        // we do range selection, however if user is clicking checking, they are probably only interested
-        // in row selection.
-        if (utils_1._.isElementChildOfClass(mouseEvent.target, 'ag-selection-checkbox', 3)) {
-            return;
+        var button = mouseEvent.button, ctrlKey = mouseEvent.ctrlKey, metaKey = mouseEvent.metaKey, shiftKey = mouseEvent.shiftKey, target = mouseEvent.target;
+        var _a = this.beans, eventService = _a.eventService, rangeController = _a.rangeController;
+        if (rangeController) {
+            var cellInRange = rangeController.isCellInAnyRange(this.getCellPosition());
+            if (cellInRange && button === 2) {
+                return;
+            }
         }
         if (utils_1._.isBrowserIE()) {
-            var target = mouseEvent.target;
             if (target.classList.contains('ag-cell')) {
                 forceBrowserFocus = true;
             }
         }
-        this.focusCell(forceBrowserFocus);
+        if (!shiftKey || (rangeController && !rangeController.getCellRanges().length)) {
+            this.focusCell(forceBrowserFocus);
+        }
+        else {
+            // if a range is being changed, we need to make sure the focused cell does not change.
+            mouseEvent.preventDefault();
+        }
+        // if we are clicking on a checkbox, we need to make sure the cell wrapping that checkbox
+        // is focused but we don't want to change the range selection, so return here.
+        if (utils_1._.isElementChildOfClass(target, 'ag-selection-checkbox', 3)) {
+            return;
+        }
         // if it's a right click, then if the cell is already in range,
         // don't change the range, however if the cell is not in a range,
         // we set a new range
         var leftMouseButtonClick = utils_1._.isLeftClick(mouseEvent);
-        if (leftMouseButtonClick && this.beans.rangeController) {
-            var thisCell = this.gridCell;
-            if (mouseEvent.shiftKey) {
-                this.beans.rangeController.extendRangeToCell(thisCell);
+        if (leftMouseButtonClick && rangeController) {
+            var thisCell = this.cellPosition;
+            if (shiftKey) {
+                rangeController.extendLatestRangeToCell(thisCell);
             }
             else {
-                var ctrlKeyPressed = mouseEvent.ctrlKey || mouseEvent.metaKey;
-                this.beans.rangeController.setRangeToCell(thisCell, ctrlKeyPressed);
+                var ctrlKeyPressed = ctrlKey || metaKey;
+                rangeController.setRangeToCell(thisCell, ctrlKeyPressed);
             }
         }
         var cellMouseDownEvent = this.createEvent(mouseEvent, events_1.Events.EVENT_CELL_MOUSE_DOWN);
-        this.beans.eventService.dispatchEvent(cellMouseDownEvent);
+        eventService.dispatchEvent(cellMouseDownEvent);
     };
     // returns true if on iPad and this is second 'click' event in 200ms
     CellComp.prototype.isDoubleClickOnIPad = function () {
@@ -1248,15 +1282,14 @@ var CellComp = /** @class */ (function (_super) {
         utils_1._.doIeFocusHack(this.getGui());
     };
     CellComp.prototype.createGridCellVo = function () {
-        var gridCellDef = {
+        this.cellPosition = {
             rowIndex: this.rowNode.rowIndex,
-            floating: this.rowNode.rowPinned,
+            rowPinned: this.rowNode.rowPinned,
             column: this.column
         };
-        this.gridCell = new gridCell_1.GridCell(gridCellDef);
     };
-    CellComp.prototype.getGridCell = function () {
-        return this.gridCell;
+    CellComp.prototype.getCellPosition = function () {
+        return this.cellPosition;
     };
     CellComp.prototype.getParentRow = function () {
         return this.eParentRow;
@@ -1287,6 +1320,9 @@ var CellComp = /** @class */ (function (_super) {
             this.cellRenderer.destroy();
             this.cellRenderer = null;
         }
+        if (this.selectionHandle) {
+            this.selectionHandle.destroy();
+        }
     };
     CellComp.prototype.onLeftChanged = function () {
         var left = this.modifyLeftForPrintLayout(this.getCellLeft());
@@ -1312,25 +1348,89 @@ var CellComp = /** @class */ (function (_super) {
         var width = this.getCellWidth();
         this.getGui().style.width = width + 'px';
     };
-    CellComp.prototype.getRangeClasses = function () {
+    CellComp.prototype.getRangeBorders = function () {
+        var _this = this;
+        var isRtl = this.beans.gridOptionsWrapper.isEnableRtl();
+        var top = false;
+        var right = false;
+        var bottom = false;
+        var left = false;
+        var thisCol = this.cellPosition.column;
+        var rangeController = this.beans.rangeController;
+        var leftCol;
+        var rightCol;
+        if (isRtl) {
+            leftCol = this.beans.columnController.getDisplayedColAfter(thisCol);
+            rightCol = this.beans.columnController.getDisplayedColBefore(thisCol);
+        }
+        else {
+            leftCol = this.beans.columnController.getDisplayedColBefore(thisCol);
+            rightCol = this.beans.columnController.getDisplayedColAfter(thisCol);
+        }
+        var ranges = rangeController.getCellRanges().filter(function (range) { return rangeController.isCellInSpecificRange(_this.cellPosition, range); });
+        // this means we are the first column in the grid
+        if (!leftCol) {
+            left = true;
+        }
+        // this means we are the last column in the grid
+        if (!rightCol) {
+            right = true;
+        }
+        for (var i = 0; i < ranges.length; i++) {
+            if (top && right && bottom && left) {
+                break;
+            }
+            var range = ranges[i];
+            var startRow = rangeController.getRangeStartRow(range);
+            var endRow = rangeController.getRangeEndRow(range);
+            if (!top && rowPosition_1.RowPositionUtils.sameRow(startRow, this.cellPosition)) {
+                top = true;
+            }
+            if (!bottom && rowPosition_1.RowPositionUtils.sameRow(endRow, this.cellPosition)) {
+                bottom = true;
+            }
+            if (!left && range.columns.indexOf(leftCol) < 0) {
+                left = true;
+            }
+            if (!right && range.columns.indexOf(rightCol) < 0) {
+                right = true;
+            }
+        }
+        return { top: top, right: right, bottom: bottom, left: left };
+    };
+    CellComp.prototype.getInitialRangeClasses = function () {
         var res = [];
-        if (!this.rangeSelectionEnabled) {
+        if (!this.rangeSelectionEnabled || !this.rangeCount) {
             return res;
         }
-        if (this.rangeCount !== 0) {
-            res.push('ag-cell-range-selected');
+        var beans = this.beans;
+        var rangeController = beans.rangeController;
+        res.push('ag-cell-range-selected');
+        if (this.hasChartRange) {
+            res.push('ag-cell-range-chart');
         }
-        if (this.rangeCount === 1) {
-            res.push('ag-cell-range-selected-1');
+        var count = Math.min(this.rangeCount, 4);
+        res.push("ag-cell-range-selected-" + count);
+        if (this.rangeCount === 1 && !rangeController.isMoreThanOneCell()) {
+            res.push('ag-cell-range-single-cell');
         }
-        if (this.rangeCount === 2) {
-            res.push('ag-cell-range-selected-2');
+        if (this.rangeCount > 0) {
+            var borders = this.getRangeBorders();
+            if (borders.top) {
+                res.push('ag-cell-range-top');
+            }
+            if (borders.right) {
+                res.push('ag-cell-range-right');
+            }
+            if (borders.bottom) {
+                res.push('ag-cell-range-bottom');
+            }
+            if (borders.left) {
+                res.push('ag-cell-range-left');
+            }
         }
-        if (this.rangeCount === 3) {
-            res.push('ag-cell-range-selected-3');
-        }
-        if (this.rangeCount >= 4) {
-            res.push('ag-cell-range-selected-4');
+        if (!!this.selectionHandle) {
+            res.push('ag-cell-range-handle');
         }
         return res;
     };
@@ -1347,9 +1447,11 @@ var CellComp = /** @class */ (function (_super) {
         if (!this.beans.enterprise) {
             return;
         }
-        var newRangeCount = this.beans.rangeController.getCellRangeCount(this.gridCell);
+        var _a = this, beans = _a.beans, cellPosition = _a.cellPosition, rangeCount = _a.rangeCount;
+        var rangeController = beans.rangeController;
+        var newRangeCount = rangeController.getCellRangeCount(cellPosition);
         var element = this.getGui();
-        if (this.rangeCount !== newRangeCount) {
+        if (rangeCount !== newRangeCount) {
             utils_1._.addOrRemoveCssClass(element, 'ag-cell-range-selected', newRangeCount !== 0);
             utils_1._.addOrRemoveCssClass(element, 'ag-cell-range-selected-1', newRangeCount === 1);
             utils_1._.addOrRemoveCssClass(element, 'ag-cell-range-selected-2', newRangeCount === 2);
@@ -1357,6 +1459,88 @@ var CellComp = /** @class */ (function (_super) {
             utils_1._.addOrRemoveCssClass(element, 'ag-cell-range-selected-4', newRangeCount >= 4);
             this.rangeCount = newRangeCount;
         }
+        var hasChartRange = this.rangeCount && rangeController.getCellRanges().every(function (range) { return utils_1._.exists(range.type); });
+        if (this.hasChartRange !== hasChartRange) {
+            utils_1._.addOrRemoveCssClass(element, 'ag-cell-range-chart', hasChartRange);
+            this.hasChartRange = hasChartRange;
+        }
+        this.updateRangeBorders();
+        var isSingleCell = this.rangeCount === 1 && !rangeController.isMoreThanOneCell();
+        utils_1._.addOrRemoveCssClass(element, 'ag-cell-range-single-cell', isSingleCell);
+        this.refreshHandle();
+        utils_1._.addOrRemoveCssClass(element, 'ag-cell-range-handle', !!this.selectionHandle);
+    };
+    CellComp.prototype.shouldHaveSelectionHandle = function () {
+        var _a = this.beans, gridOptionsWrapper = _a.gridOptionsWrapper, rangeController = _a.rangeController;
+        var el = this.getGui();
+        var cellRanges = rangeController.getCellRanges();
+        var rangesLen = cellRanges.length;
+        if (!rangesLen) {
+            return false;
+        }
+        var lastRange = utils_1._.last(cellRanges);
+        var isFirstRangeCategory = cellRanges[0].type === iRangeController_1.CellRangeType.DIMENSION;
+        var handlesAllowed = (gridOptionsWrapper.isEnableFillHandle() ||
+            gridOptionsWrapper.isEnableRangeHandle() ||
+            this.hasChartRange && !isFirstRangeCategory) && rangesLen === 1;
+        if (!handlesAllowed && this.hasChartRange) {
+            var cellPosition = this.getCellPosition();
+            handlesAllowed =
+                isFirstRangeCategory &&
+                    rangesLen === 2 &&
+                    rangeController.isCellInSpecificRange(this.getCellPosition(), lastRange);
+            var isCategory = isFirstRangeCategory &&
+                rangeController.isCellInSpecificRange(cellPosition, cellRanges[0]);
+            utils_1._.addOrRemoveCssClass(el, 'ag-cell-range-chart-category', isCategory);
+        }
+        return this.rangeCount &&
+            handlesAllowed &&
+            this.beans.rangeController.isContiguousRange(lastRange) &&
+            (utils_1._.containsClass(el, 'ag-cell-range-single-cell') ||
+                (utils_1._.containsClass(el, 'ag-cell-range-bottom') && utils_1._.containsClass(el, 'ag-cell-range-right')));
+    };
+    CellComp.prototype.addSelectionHandle = function () {
+        var _a = this.beans, gridOptionsWrapper = _a.gridOptionsWrapper, context = _a.context, rangeController = _a.rangeController;
+        var cellRangeType = utils_1._.last(rangeController.getCellRanges()).type;
+        var type = (gridOptionsWrapper.isEnableFillHandle() && utils_1._.missing(cellRangeType)) ? 'fill' : 'range';
+        if (this.selectionHandle && this.selectionHandle.getType() !== type) {
+            this.selectionHandle.destroy();
+            this.selectionHandle = undefined;
+        }
+        if (!this.selectionHandle) {
+            this.selectionHandle = context.createComponentFromElement(document.createElement("ag-" + type + "-handle"));
+        }
+        this.selectionHandle.refresh(this);
+    };
+    CellComp.prototype.updateRangeBordersIfRangeCount = function () {
+        // we only need to update range borders if we are in a range
+        if (this.rangeCount > 0) {
+            this.updateRangeBorders();
+            this.refreshHandle();
+        }
+    };
+    CellComp.prototype.refreshHandle = function () {
+        var shouldHaveSelectionHandle = this.shouldHaveSelectionHandle();
+        if (this.selectionHandle && !shouldHaveSelectionHandle) {
+            this.selectionHandle.destroy();
+            this.selectionHandle = null;
+        }
+        if (shouldHaveSelectionHandle) {
+            this.addSelectionHandle();
+        }
+    };
+    CellComp.prototype.updateRangeBorders = function () {
+        var rangeBorders = this.getRangeBorders();
+        var isSingleCell = this.rangeCount === 1 && !this.beans.rangeController.isMoreThanOneCell();
+        var isTop = !isSingleCell && rangeBorders.top;
+        var isRight = !isSingleCell && rangeBorders.right;
+        var isBottom = !isSingleCell && rangeBorders.bottom;
+        var isLeft = !isSingleCell && rangeBorders.left;
+        var element = this.getGui();
+        utils_1._.addOrRemoveCssClass(element, 'ag-cell-range-top', isTop);
+        utils_1._.addOrRemoveCssClass(element, 'ag-cell-range-right', isRight);
+        utils_1._.addOrRemoveCssClass(element, 'ag-cell-range-bottom', isBottom);
+        utils_1._.addOrRemoveCssClass(element, 'ag-cell-range-left', isLeft);
     };
     CellComp.prototype.onFirstRightPinnedChanged = function () {
         var firstRightPinned = this.column.isFirstRightPinned();
@@ -1386,6 +1570,9 @@ var CellComp = /** @class */ (function (_super) {
         else {
             this.eParentOfValue = this.getGui();
         }
+    };
+    CellComp.prototype.getFrameworkOverrides = function () {
+        return this.beans.frameworkOverrides;
     };
     CellComp.prototype.addRowDragging = function () {
         // row dragging only available in default row model
@@ -1424,15 +1611,13 @@ var CellComp = /** @class */ (function (_super) {
         });
     };
     CellComp.prototype.onCellFocused = function (event) {
-        var cellFocused = this.beans.focusedCellController.isCellFocused(this.gridCell);
+        var cellFocused = this.beans.focusedCellController.isCellFocused(this.cellPosition);
         // see if we need to change the classes on this cell
         if (cellFocused !== this.cellFocused) {
-            // if we are not doing cell selection, then the focus class does not change, all cells will
-            // stay with ag-cell-no-focus class
+            // if we are not doing cell selection, then the focus class does not change
             var doingFocusCss = !this.beans.gridOptionsWrapper.isSuppressCellSelection();
             if (doingFocusCss) {
                 utils_1._.addOrRemoveCssClass(this.getGui(), 'ag-cell-focus', cellFocused);
-                utils_1._.addOrRemoveCssClass(this.getGui(), 'ag-cell-no-focus', !cellFocused);
             }
             this.cellFocused = cellFocused;
         }

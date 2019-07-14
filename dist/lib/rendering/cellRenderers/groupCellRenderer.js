@@ -1,6 +1,6 @@
 /**
  * ag-grid-community - Advanced Data Grid / Data Table supporting Javascript / React / AngularJS / Web Components
- * @version v20.1.0
+ * @version v21.0.1
  * @link http://www.ag-grid.com/
  * @license MIT
  */
@@ -35,13 +35,13 @@ var constants_1 = require("../../constants");
 var context_1 = require("../../context/context");
 var component_1 = require("../../widgets/component");
 var rowNode_1 = require("../../entities/rowNode");
-var cellRendererService_1 = require("../cellRendererService");
 var valueFormatterService_1 = require("../valueFormatterService");
 var checkboxSelectionComponent_1 = require("../checkboxSelectionComponent");
 var columnController_1 = require("../../columnController/columnController");
 var column_1 = require("../../entities/column");
 var componentAnnotations_1 = require("../../widgets/componentAnnotations");
 var mouseEventService_1 = require("../../gridPanel/mouseEventService");
+var userComponentFactory_1 = require("../../components/framework/userComponentFactory");
 var utils_1 = require("../../utils");
 var GroupCellRenderer = /** @class */ (function (_super) {
     __extends(GroupCellRenderer, _super);
@@ -195,10 +195,10 @@ var GroupCellRenderer = /** @class */ (function (_super) {
         params.valueFormatted = valueFormatted;
         var rendererPromise;
         if (params.fullWidth == true) {
-            rendererPromise = this.cellRendererService.useFullWidthGroupRowInnerCellRenderer(this.eValue, params);
+            rendererPromise = this.useFullWidth(params);
         }
         else {
-            rendererPromise = this.cellRendererService.useInnerCellRenderer(this.params.colDef.cellRendererParams, columnToUse.getColDef(), this.eValue, params);
+            rendererPromise = this.useInnerRenderer(this.params.colDef.cellRendererParams, columnToUse.getColDef(), params);
         }
         // retain a reference to the created renderer - we'll use this later for cleanup (in destroy)
         if (rendererPromise) {
@@ -206,6 +206,73 @@ var GroupCellRenderer = /** @class */ (function (_super) {
                 _this.innerCellRenderer = value;
             });
         }
+    };
+    GroupCellRenderer.prototype.useInnerRenderer = function (groupCellRendererParams, groupedColumnDef, // the column this group row is for, eg 'Country'
+    params) {
+        // when grouping, the normal case is we use the cell renderer of the grouped column. eg if grouping by country
+        // and then rating, we will use the country cell renderer for each country group row and likewise the rating
+        // cell renderer for each rating group row.
+        //
+        // however if the user has innerCellRenderer defined, this gets preference and we don't use cell renderers
+        // of the grouped columns.
+        //
+        // so we check and use in the following order:
+        //
+        // 1) thisColDef.cellRendererParams.innerRenderer of the column showing the groups (eg auto group column)
+        // 2) groupedColDef.cellRenderer of the grouped column
+        // 3) groupedColDef.cellRendererParams.innerRenderer
+        var _this = this;
+        var cellRendererPromise = null;
+        // we check if cell renderer provided for the group cell renderer, eg colDef.cellRendererParams.innerRenderer
+        var groupInnerRendererClass = this.userComponentFactory
+            .lookupComponentClassDef(groupCellRendererParams, "innerRenderer");
+        if (groupInnerRendererClass && groupInnerRendererClass.component != null
+            && groupInnerRendererClass.source != userComponentFactory_1.ComponentSource.DEFAULT) {
+            // use the renderer defined in cellRendererParams.innerRenderer
+            cellRendererPromise = this.userComponentFactory.newInnerCellRenderer(groupCellRendererParams, params);
+        }
+        else {
+            // otherwise see if we can use the cellRenderer of the column we are grouping by
+            var groupColumnRendererClass = this.userComponentFactory
+                .lookupComponentClassDef(groupedColumnDef, "cellRenderer");
+            if (groupColumnRendererClass && groupColumnRendererClass.source != userComponentFactory_1.ComponentSource.DEFAULT) {
+                // Only if the original column is using a specific renderer, it it is a using a DEFAULT one ignore it
+                cellRendererPromise = this.userComponentFactory.newCellRenderer(groupedColumnDef, params);
+            }
+            else if (groupColumnRendererClass && groupColumnRendererClass.source == userComponentFactory_1.ComponentSource.DEFAULT
+                && (utils_1._.get(groupedColumnDef, 'cellRendererParams.innerRenderer', null))) {
+                // EDGE CASE - THIS COMES FROM A COLUMN WHICH HAS BEEN GROUPED DYNAMICALLY, THAT HAS AS RENDERER 'group'
+                // AND HAS A INNER CELL RENDERER
+                cellRendererPromise = this.userComponentFactory.newInnerCellRenderer(groupedColumnDef.cellRendererParams, params);
+            }
+            else {
+                // This forces the retrieval of the default plain cellRenderer that just renders the values.
+                cellRendererPromise = this.userComponentFactory.newCellRenderer({}, params);
+            }
+        }
+        if (cellRendererPromise != null) {
+            cellRendererPromise.then(function (rendererToUse) {
+                if (rendererToUse == null) {
+                    _this.eValue.innerText = params.valueFormatted != null ? params.valueFormatted : params.value;
+                    return;
+                }
+                utils_1._.bindCellRendererToHtmlElement(cellRendererPromise, _this.eValue);
+            });
+        }
+        else {
+            this.eValue.innerText = params.valueFormatted != null ? params.valueFormatted : params.value;
+        }
+        return cellRendererPromise;
+    };
+    GroupCellRenderer.prototype.useFullWidth = function (params) {
+        var cellRendererPromise = this.userComponentFactory.newFullWidthGroupRowInnerCellRenderer(params);
+        if (cellRendererPromise != null) {
+            utils_1._.bindCellRendererToHtmlElement(cellRendererPromise, this.eValue);
+        }
+        else {
+            this.eValue.innerText = params.valueFormatted != null ? params.valueFormatted : params.value;
+        }
+        return cellRendererPromise;
     };
     GroupCellRenderer.prototype.addChildCount = function () {
         // only include the child count if it's included, eg if user doing custom aggregation,
@@ -246,7 +313,7 @@ var GroupCellRenderer = /** @class */ (function (_super) {
             && !rowNode.detail;
         if (checkboxNeeded) {
             var cbSelectionComponent_1 = new checkboxSelectionComponent_1.CheckboxSelectionComponent();
-            this.context.wireBean(cbSelectionComponent_1);
+            this.getContext().wireBean(cbSelectionComponent_1);
             cbSelectionComponent_1.init({ rowNode: rowNode, column: this.params.column });
             this.eCheckbox.appendChild(cbSelectionComponent_1.getGui());
             this.addDestroyFunc(function () { return cbSelectionComponent_1.destroy(); });
@@ -281,7 +348,11 @@ var GroupCellRenderer = /** @class */ (function (_super) {
         this.setIndent();
     };
     GroupCellRenderer.prototype.onKeyDown = function (event) {
-        if (utils_1._.isKeyPressed(event, constants_1.Constants.KEY_ENTER)) {
+        var enterKeyPressed = utils_1._.isKeyPressed(event, constants_1.Constants.KEY_ENTER);
+        if (enterKeyPressed) {
+            if (this.params.suppressEnterExpand) {
+                return;
+            }
             var cellEditable = this.params.column.isCellEditable(this.params.node);
             if (cellEditable) {
                 return;
@@ -303,9 +374,16 @@ var GroupCellRenderer = /** @class */ (function (_super) {
         }
         else {
             var rowGroupColumn = rowNode.rowGroupColumn;
-            // if the displayGroup column for this col matches the rowGroupColumn we grouped by for this node,
-            // then nothing was dragged down
-            this.draggedFromHideOpenParents = !column.isRowGroupDisplayed(rowGroupColumn.getId());
+            if (rowGroupColumn) {
+                // if the displayGroup column for this col matches the rowGroupColumn we grouped by for this node,
+                // then nothing was dragged down
+                this.draggedFromHideOpenParents = !column.isRowGroupDisplayed(rowGroupColumn.getId());
+            }
+            else {
+                // the only way we can end up here (no column, but a group) is if we are at the root node,
+                // which only happens when 'groupIncludeTotalFooter' is true. here, we are never dragging
+                this.draggedFromHideOpenParents = false;
+            }
         }
         if (this.draggedFromHideOpenParents) {
             var pointer = rowNode.parent;
@@ -377,6 +455,7 @@ var GroupCellRenderer = /** @class */ (function (_super) {
         var pivotModeAndLeafGroup = this.columnController.isPivotMode() && displayedGroup.leafGroup;
         var notExpandable = !displayedGroup.isExpandable();
         var addLeafIndentClass = displayedGroup.footer || notExpandable || pivotModeAndLeafGroup;
+        this.addOrRemoveCssClass('ag-row-group', !addLeafIndentClass);
         this.addOrRemoveCssClass('ag-row-group-leaf-indent', addLeafIndentClass);
     };
     GroupCellRenderer.prototype.destroy = function () {
@@ -388,7 +467,7 @@ var GroupCellRenderer = /** @class */ (function (_super) {
     GroupCellRenderer.prototype.refresh = function () {
         return false;
     };
-    GroupCellRenderer.TEMPLATE = '<span>' +
+    GroupCellRenderer.TEMPLATE = '<span class="ag-cell-wrapper">' +
         '<span class="ag-group-expanded" ref="eExpanded"></span>' +
         '<span class="ag-group-contracted" ref="eContracted"></span>' +
         '<span class="ag-group-checkbox ag-invisible" ref="eCheckbox"></span>' +
@@ -408,17 +487,9 @@ var GroupCellRenderer = /** @class */ (function (_super) {
         __metadata("design:type", eventService_1.EventService)
     ], GroupCellRenderer.prototype, "eventService", void 0);
     __decorate([
-        context_1.Autowired('cellRendererService'),
-        __metadata("design:type", cellRendererService_1.CellRendererService)
-    ], GroupCellRenderer.prototype, "cellRendererService", void 0);
-    __decorate([
         context_1.Autowired('valueFormatterService'),
         __metadata("design:type", valueFormatterService_1.ValueFormatterService)
     ], GroupCellRenderer.prototype, "valueFormatterService", void 0);
-    __decorate([
-        context_1.Autowired('context'),
-        __metadata("design:type", context_1.Context)
-    ], GroupCellRenderer.prototype, "context", void 0);
     __decorate([
         context_1.Autowired('columnController'),
         __metadata("design:type", columnController_1.ColumnController)
@@ -427,6 +498,10 @@ var GroupCellRenderer = /** @class */ (function (_super) {
         context_1.Autowired('mouseEventService'),
         __metadata("design:type", mouseEventService_1.MouseEventService)
     ], GroupCellRenderer.prototype, "mouseEventService", void 0);
+    __decorate([
+        context_1.Autowired('userComponentFactory'),
+        __metadata("design:type", userComponentFactory_1.UserComponentFactory)
+    ], GroupCellRenderer.prototype, "userComponentFactory", void 0);
     __decorate([
         componentAnnotations_1.RefSelector('eExpanded'),
         __metadata("design:type", HTMLElement)

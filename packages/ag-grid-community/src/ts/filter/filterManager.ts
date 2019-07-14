@@ -13,7 +13,7 @@ import { ColumnEventType, Events, FilterChangedEvent, FilterModifiedEvent, Filte
 import { IDoesFilterPassParams, IFilterComp, IFilterParams } from "../interfaces/iFilter";
 import { ColDef, GetQuickFilterTextParams } from "../entities/colDef";
 import { GridApi } from "../gridApi";
-import { ComponentResolver } from "../components/framework/componentResolver";
+import { UserComponentFactory } from "../components/framework/userComponentFactory";
 import { GridCore } from "../gridCore";
 
 export type FilterRequestSource = 'COLUMN_MENU' | 'TOOLBAR' | 'NO_UI';
@@ -33,7 +33,7 @@ export class FilterManager {
     @Autowired('context') private context: Context;
     @Autowired('columnApi') private columnApi: ColumnApi;
     @Autowired('gridApi') private gridApi: GridApi;
-    @Autowired('componentResolver') private componentResolver: ComponentResolver;
+    @Autowired('userComponentFactory') private userComponentFactory: UserComponentFactory;
 
     public static QUICK_FILTER_SEPARATOR = '\n';
 
@@ -46,6 +46,14 @@ export class FilterManager {
 
     private gridCore: GridCore;
 
+    // this is true when the grid is processing the filter change. this is used by the cell comps, so that they
+    // don't flash when data changes due to filter changes. there is no need to flash when filter changes as the
+    // user is in control, so doesn't make sense to show flashing changes. for example, go to main demo where
+    // this feature is turned off (hack code to always return false for isSuppressFlashingCellsBecauseFiltering(), put in)
+    // 100,000 rows and group by country. then do some filtering. all the cells flash, which is silly.
+    private processingFilterChange = false;
+    private allowShowChangeAfterFilter: boolean;
+
     public registerGridCore(gridCore: GridCore): void {
         this.gridCore = gridCore;
     }
@@ -57,6 +65,8 @@ export class FilterManager {
 
         this.quickFilter = this.parseQuickFilter(this.gridOptionsWrapper.getQuickFilterText());
         this.setQuickFilterParts();
+
+        this.allowShowChangeAfterFilter = this.gridOptionsWrapper.isAllowShowChangeAfterFilter();
 
         // check this here, in case there is a filter from the start
         this.checkExternalFilter();
@@ -153,10 +163,10 @@ export class FilterManager {
         this.advancedFilterPresent = atLeastOneActive;
     }
 
-    private updateFilterFlagInColumns(source: ColumnEventType): void {
+    private updateFilterFlagInColumns(source: ColumnEventType, additionalEventAttributes?: any): void {
         _.iterateObject(this.allFilters, function(key, filterWrapper: FilterWrapper) {
             const filterActive = filterWrapper.filterPromise.resolveNow(false, filter => filter.isFilterActive());
-            filterWrapper.column.setFilterActive(filterActive, source);
+            filterWrapper.column.setFilterActive(filterActive, source, additionalEventAttributes);
         });
     }
 
@@ -213,8 +223,8 @@ export class FilterManager {
             return null;
         }
 
-        if (this.gridOptionsWrapper.isRowModelInfinite()) {
-            console.warn('ag-grid: cannot do quick filtering when doing virtual paging');
+        if (!this.gridOptionsWrapper.isRowModelDefault()) {
+            console.warn('ag-grid: quick filtering only works with the Client-side Row Model');
             return null;
         }
 
@@ -235,9 +245,9 @@ export class FilterManager {
         this.externalFilterPresent = this.gridOptionsWrapper.isExternalFilterPresent();
     }
 
-    public onFilterChanged(): void {
+    public onFilterChanged(additionalEventAttributes?: any): void {
         this.setAdvancedFilterPresent();
-        this.updateFilterFlagInColumns("filterChanged");
+        this.updateFilterFlagInColumns("filterChanged", additionalEventAttributes);
         this.checkExternalFilter();
 
         _.iterateObject(this.allFilters, function(key, filterWrapper: FilterWrapper) {
@@ -248,12 +258,32 @@ export class FilterManager {
             });
         });
 
-        const event: FilterChangedEvent = {
+        const filterChangedEvent: FilterChangedEvent = {
             type: Events.EVENT_FILTER_CHANGED,
             api: this.gridApi,
             columnApi: this.columnApi
         };
-        this.eventService.dispatchEvent(event);
+        if (additionalEventAttributes) {
+            _.mergeDeep(filterChangedEvent, additionalEventAttributes);
+        }
+
+        // because internal events are not async in ag-grid, when the dispatchEvent
+        // method comes back, we know all listeners have finished executing.
+        this.processingFilterChange = true;
+
+        this.eventService.dispatchEvent(filterChangedEvent);
+
+        this.processingFilterChange = false;
+    }
+
+    public isSuppressFlashingCellsBecauseFiltering(): boolean {
+        if (this.allowShowChangeAfterFilter) {
+            // if user has elected to always flash cell changes, then return false always
+            return false;
+        } else {
+            // otherwise we suppress flashing changes when filtering
+            return this.processingFilterChange;
+        }
     }
 
     public isQuickFilterPresent(): boolean {
@@ -430,7 +460,6 @@ export class FilterManager {
         if (this.gridOptionsWrapper.isEnterprise()) {
             defaultFilter = 'agSetColumnFilter';
         }
-        const sanitisedColDef: ColDef = _.cloneObject(column.getColDef());
 
         const event: FilterModifiedEvent = {
             type: Events.EVENT_FILTER_MODIFIED,
@@ -438,37 +467,40 @@ export class FilterManager {
             columnApi: this.columnApi
         };
 
-        const filterChangedCallback = this.onFilterChanged.bind(this);
-        const filterModifiedCallback = () => this.eventService.dispatchEvent(event);
+        const sanitisedColDef: ColDef = _.cloneObject(column.getColDef());
 
+        const params = this.createFilterParams(column, sanitisedColDef, $scope);
+        params.filterChangedCallback = this.onFilterChanged.bind(this);
+        params.filterModifiedCallback = () => this.eventService.dispatchEvent(event);
+
+        // we modify params in a callback as we need the filter instance, and this isn't available
+        // when creating the params above
+        const modifyParamsCallback = (params: any, filter: IFilterComp) => _.assign(params, {
+            doesRowPassOtherFilter: this.doesRowPassOtherFilters.bind(this, filter),
+        });
+
+        return this.userComponentFactory.newFilterComponent(sanitisedColDef, params, defaultFilter, modifyParamsCallback);
+    }
+
+    public createFilterParams(column: Column, colDef: ColDef, $scope: any = null): IFilterParams {
         const params: IFilterParams = {
+            api: this.gridOptionsWrapper.getApi(),
             column: column,
-            colDef: sanitisedColDef,
+            colDef: colDef,
             rowModel: this.rowModel,
-            filterChangedCallback: filterChangedCallback,
-            filterModifiedCallback: filterModifiedCallback,
+            filterChangedCallback: null,
+            filterModifiedCallback: null,
             valueGetter: this.createValueGetter(column),
             context: this.gridOptionsWrapper.getContext(),
-            doesRowPassOtherFilter: null,
-            $scope: $scope
+            doesRowPassOtherFilter: null
         };
 
-        return this.componentResolver.createAgGridComponent<IFilterComp>(
-            sanitisedColDef,
-            params,
-            'filter',
-            {
-                api: this.gridApi,
-                columnApi: this.columnApi,
-                column: column,
-                colDef: sanitisedColDef
-            },
-            defaultFilter,
-            true,
-            (params, filter) => _.assign(params, {
-                doesRowPassOtherFilter: this.doesRowPassOtherFilters.bind(this, filter),
-            })
-        );
+        // hack in scope if using AngularJS
+        if ($scope) {
+            (params as any).$scope = $scope;
+        }
+
+        return params;
     }
 
     private createFilterWrapper(column: Column, source: FilterRequestSource): FilterWrapper {

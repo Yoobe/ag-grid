@@ -1,17 +1,42 @@
-// ag-grid-enterprise v20.1.0
+// ag-grid-enterprise v21.0.1
 import { Scene } from "./scene";
 import { Matrix } from "./matrix";
 import { BBox } from "./bbox";
+export declare enum PointerEvents {
+    All = 0,
+    None = 1
+}
 /**
  * Abstract scene graph node.
  * Each node can have zero or one parent and belong to zero or one scene.
  */
 export declare abstract class Node {
     private createId;
+    /**
+     * Unique node ID in the form `ClassName-NaturalNumber`.
+     */
     readonly id: string;
+    /**
+     * Some arbitrary data bound to the node.
+     */
     datum: any;
+    /**
+     * Some number to identify this node, typically within a `Group` node.
+     * Usually this will be some enum value used as a selector.
+     */
     tag: number;
+    /**
+     * This is meaningfully faster than `instanceof` and should be the preferred way
+     * of checking inside loops.
+     * @param node
+     */
     static isNode(node: any): node is Node;
+    /**
+     * To simplify the type system (especially in Selections) we don't have the `Parent` node
+     * (one that has children). Instead, we mimic HTML DOM, where any node can have children.
+     * But we still need to distinguish regular leaf nodes from leaf containers somehow.
+     */
+    protected isContainerNode: boolean;
     protected _scene: Scene | null;
     _setScene(value: Scene | null): void;
     readonly scene: Scene | null;
@@ -43,7 +68,7 @@ export declare abstract class Node {
      * @param nextNode
      */
     insertBefore<T extends Node>(node: T, nextNode?: Node | null): T;
-    protected matrix: Matrix;
+    matrix: Matrix;
     protected inverseMatrix: Matrix;
     /**
      * Calculates the combined inverse transformation for this node,
@@ -56,8 +81,8 @@ export declare abstract class Node {
         x: number;
         y: number;
     };
-    private _isDirtyTransform;
-    isDirtyTransform: boolean;
+    private _dirtyTransform;
+    dirtyTransform: boolean;
     private _scalingX;
     scalingX: number;
     private _scalingY;
@@ -101,9 +126,18 @@ export declare abstract class Node {
     private _translationY;
     translationY: number;
     isPointInNode(x: number, y: number): boolean;
+    /**
+     * Hit testing method.
+     * Recursively checks if the given point is inside this node or any of its children.
+     * Returns the first matching node or `undefined`.
+     * Nodes that render later (show on top) are hit tested first.
+     * @param x
+     * @param y
+     */
+    pickNode(x: number, y: number): Node | undefined;
     readonly getBBox?: () => BBox;
     getBBoxCenter(): [number, number];
-    protected computeTransformMatrix(): void;
+    computeTransformMatrix(): void;
     /**
      * Scene nodes start rendering with the {@link Scene.root | root},
      * where the `render` call propagates from parent nodes to their children.
@@ -124,18 +158,19 @@ export declare abstract class Node {
     abstract render(ctx: CanvasRenderingContext2D): void;
     /**
      * Each time a property of the node that effects how it renders changes
-     * the `isDirty` property of the node should be set to `true`. The change
-     * to the `isDirty` property of the node will propagate up to its parents
+     * the `dirty` property of the node should be set to `true`. The change
+     * to the `dirty` property of the node will propagate up to its parents
      * and eventually to the scene, at which point an animation frame callback
-     * will be scheduled to rerender the scene and its nodes and reset the `isDirty`
-     * flags of all nodes and the {@link Scene._isDirty | Scene} back to `false`.
+     * will be scheduled to rerender the scene and its nodes and reset the `dirty`
+     * flags of all nodes and the {@link Scene._dirty | Scene} back to `false`.
      * Since changes to node properties are not rendered immediately, it's possible
      * to change as many properties on as many nodes as needed and the rendering
      * will still only happen once in the next animation frame callback.
      * The animation frame callback is only scheduled if it hasn't been already.
      */
-    private _isDirty;
-    isDirty: boolean;
-    private _isVisible;
-    isVisible: boolean;
+    private _dirty;
+    dirty: boolean;
+    private _visible;
+    visible: boolean;
+    pointerEvents: PointerEvents;
 }

@@ -783,11 +783,6 @@ window.addEventListener("load", function() {
                     <td>The header icon height.</td>
                 </tr>
                 <tr>
-                    <td>icons-path</td>
-                    <td><code>../../ag-theme-base/icons/</code></td>
-                    <td>The path to the icon svg files. If you are to change that, make sure that the directory you point to contains the complete set of icons.</td>
-                </tr>
-                <tr>
                     <td>font-family</td>
                     <td>'Helvetica Neue', sans-serif</td>
                     <td>The grid font family.</td>
@@ -1089,10 +1084,6 @@ window.addEventListener("load", function() {
                         <td>2px</td>
                     </tr>
                     <tr>
-                        <td>icons-path</td>
-                        <td> "../../ag-theme-balham/icons/"</td>
-                    </tr>
-                    <tr>
                         <td>font-family</td>
                         <td>-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif</td>
                     </tr>
@@ -1129,8 +1120,8 @@ window.addEventListener("load", function() {
                         <td><code>border-radius</code></td>
                     </tr>
                     <tr>
-                        <td>tooltio-border-color</td>
-                        <td><code>darken($border-color, 10%)</code></td>
+                        <td>tooltip-border-color</td>
+                        <td><code>tooltip-foreground-color</code></td>
                     </tr>
                 </tbody>
             </table>
@@ -1231,10 +1222,6 @@ window.addEventListener("load", function() {
                     <tr>
                         <td>header-icon-size</td>
                         <td>14px</td>
-                    </tr>
-                    <tr>
-                        <td>icons-path</td>
-                        <td>"../icons/"</td>
                     </tr>
                     <tr>
                         <td>font-family</td>
@@ -1369,10 +1356,6 @@ window.addEventListener("load", function() {
         </div>
     </div>
 </div>
-
-<p>
-    You can examine the full, up-to-date list of the Sass variables and their usage in <a href="https://github.com/ag-grid/ag-grid/tree/master/src/styles">the source code of the themes</a>.
-</p>
 
 
 
